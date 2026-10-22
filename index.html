@@ -1,0 +1,1824 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>EcoLoop | Gamified Citizen Science</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --royal:#0C1A2B; --royal-d:#000000; --royal-l:#B6FF3B;
+  --lime:#B6FF3B; --lime-d:#0C1A2B; --lime-l:#DDE3EA;
+  --powder:#DDE3EA; --psoft:#DDE3EA;
+  --white:#DDE3EA; --bg:#DDE3EA; --line:rgba(12,26,43,.16);
+  --muted:rgba(12,26,43,.66); --danger:#0C1A2B;
+  --app-w:440px;
+  --font-head:'Manrope',system-ui,sans-serif;
+  --font-body:'Poppins',system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--font-body);background:radial-gradient(ellipse at 8% 12%,rgba(182,255,59,.78),transparent 31%),radial-gradient(ellipse at 90% 76%,rgba(12,26,43,.2),transparent 37%),linear-gradient(135deg,#DDE3EA 0%,#B6FF3B 52%,#DDE3EA 100%);background-attachment:fixed;background-repeat:no-repeat;background-size:cover;color:var(--royal-d);line-height:1.5;-webkit-tap-highlight-color:transparent}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none}
+.hidden{display:none !important}
+svg{display:block}
+
+/* ===== APP SHELL ===== */
+body{display:flex;justify-content:center}
+#app{width:100%;max-width:var(--app-w);min-height:100vh;min-height:100dvh;background:linear-gradient(160deg,rgba(221,227,234,.08),rgba(12,26,43,.035));position:relative;padding-bottom:calc(100px + env(safe-area-inset-bottom));box-shadow:0 0 50px rgba(12,26,43,.12)}
+body.is-auth #app{padding-bottom:0}
+body.is-auth .topbar,body.is-auth .bottomnav{display:none}
+.topbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:rgba(12,26,43,.94);border-bottom:1px solid rgba(221,227,234,.22);backdrop-filter:blur(18px) saturate(1.35);-webkit-backdrop-filter:blur(18px) saturate(1.35)}
+.topbar,.topbar *{color:var(--white)}
+.brand{font-family:var(--font-head);font-weight:800;font-size:1.05rem;display:flex;align-items:center;gap:8px}
+.brand-copy{display:grid;gap:1px;min-width:0}
+.brand-slogan{display:grid;min-width:0;min-height:1em;overflow:hidden;color:rgba(221,227,234,.76);font-family:var(--font-body);font-size:.57rem;font-weight:500;line-height:1.2}
+.brand-slogan span{grid-area:1/1;opacity:0;animation:sloganCycle 12s ease-in-out infinite}
+.brand-slogan span:nth-child(2){animation-delay:4s}
+.brand-slogan span:nth-child(3){animation-delay:8s}
+.brand-mark{width:30px;height:30px;flex-shrink:0;filter:drop-shadow(0 2px 4px rgba(0,0,0,.16))}
+.brand-mark .orbit,.brand-mark .vein{stroke-dasharray:none;stroke-dashoffset:0;animation:none}
+.brand-mark .arrow,.brand-mark .coin{opacity:1;animation:none}
+.brand-mark .coin{transform:none}
+.brand-mark .coin-ring{stroke:var(--royal-d);stroke-opacity:.3;stroke-width:2}
+.brand-mark .leaf{fill:var(--royal-d)}
+.brand-mark .vein{stroke:var(--lime-l)}
+.brand-dot{width:11px;height:11px;border-radius:50%;background:var(--lime)}
+.pill{background:var(--lime);color:var(--royal-d);padding:7px 13px;border-radius:999px;font-weight:800;font-size:.84rem;display:inline-flex;align-items:center;gap:6px}
+main{padding:16px 16px 22px}
+.view{animation:fadeUp .4s ease both}
+h1,h2,h3{font-family:var(--font-head)}
+
+/* ===== ICONS ===== */
+.ic{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* ===== TOAST (pojok kanan atas, tidak menabrak apa pun) ===== */
+#toast{position:fixed;top:16px;right:16px;z-index:9000;display:flex;flex-direction:column;gap:8px;align-items:flex-end;width:min(300px,calc(100% - 32px));pointer-events:none}
+#toast .t{background:rgba(12,26,43,.94);color:var(--white);padding:10px 14px;border-radius:12px;font-size:.78rem;font-weight:600;border:1px solid rgba(221,227,234,.22);border-left:4px solid var(--lime);box-shadow:0 10px 25px -8px rgba(0,0,0,.3);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);animation:rise .3s ease both;transition:opacity .35s;max-width:100%}
+#toast .t.out{opacity:0}
+
+/* ===== SPLASH ===== */
+#splash{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px 16px;background:radial-gradient(circle at 50% 38%,rgba(182,255,59,.2),transparent 32%),linear-gradient(145deg,#000000,#000000);color:var(--white);transition:opacity .5s ease,visibility .5s;cursor:pointer}
+#splash.hide{opacity:0;visibility:hidden}
+.splash-inner{text-align:center;width:min(100%,420px);padding:clamp(20px,5vw,36px);border:1px solid rgba(221,227,234,.18);border-radius:30px;background:rgba(221,227,234,.06);box-shadow:0 24px 80px rgba(0,0,0,.34);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);opacity:0;transform:translateY(14px)}
+#splash.ready .splash-inner{animation:splashEntrance .7s cubic-bezier(.2,.8,.2,1) forwards}
+.splash-logo{width:clamp(112px,30vw,144px);height:auto;aspect-ratio:1;margin:0 auto 14px;display:block;overflow:visible}
+#splash.ready .splash-logo{animation:splashFloat 1.7s ease-in-out .5s infinite;will-change:transform}
+.eco-mark .badge{fill:rgba(221,227,234,.07);stroke:rgba(221,227,234,.3);stroke-width:1.5}
+.eco-mark .orbit{fill:none;stroke:var(--lime);stroke-width:5;stroke-linecap:round;stroke-dasharray:118;stroke-dashoffset:118}
+#splash.ready .eco-mark .orbit{animation:draw 1s cubic-bezier(.65,0,.35,1) forwards .15s}
+.eco-mark .orbit.second{stroke:var(--lime-l)}
+#splash.ready .eco-mark .orbit.second{animation-delay:.45s}
+.eco-mark .arrow{fill:var(--lime);opacity:0}
+#splash.ready .eco-mark .arrow{animation:logoPop .4s ease forwards 1s}
+.eco-mark .arrow.second{fill:var(--lime-l);animation-delay:1.5s}
+.eco-mark .coin{fill:var(--lime);stroke:var(--lime-l);stroke-width:2;opacity:0;transform-origin:60px 60px}
+#splash.ready .eco-mark .coin{animation:leafIn .65s cubic-bezier(.2,.8,.2,1) forwards 1.05s}
+.eco-mark .coin-ring{fill:none;stroke:var(--royal-d);stroke-opacity:.3;stroke-width:2}
+.eco-mark .leaf{fill:var(--royal-d)}
+.eco-mark .vein{fill:none;stroke:var(--lime-l);stroke-width:3;stroke-linecap:round;stroke-dasharray:32;stroke-dashoffset:32}
+#splash.ready .eco-mark .vein{animation:draw .6s ease forwards 1.55s}
+.brand-mark.eco-mark .orbit,.brand-mark.eco-mark .vein{stroke-dasharray:none;stroke-dashoffset:0;animation:none}
+.brand-mark.eco-mark .arrow,.brand-mark.eco-mark .coin{opacity:1;animation:none}
+.brand-mark.eco-mark .coin{transform:none}
+.splash-inner h1{font-size:clamp(1.9rem,7vw,2.35rem);font-weight:800;letter-spacing:-.04em;line-height:1.15}
+.splash-tag{color:var(--lime);margin:8px 0 22px;font-size:clamp(.84rem,3vw,.98rem);font-weight:500}
+.splash-bar{width:min(180px,65vw);height:6px;margin:0 auto 10px;background:rgba(221,227,234,.2);border-radius:999px;overflow:hidden}
+.splash-bar span{display:block;height:100%;width:100%;transform:scaleX(0);transform-origin:left center;background:linear-gradient(90deg,var(--lime),var(--lime-l));border-radius:999px}
+#splash.ready .splash-bar span{animation:load 5.8s cubic-bezier(.2,.65,.25,1) forwards}
+.splash-inner small{color:rgba(221,227,234,.82);font-size:.75rem}
+
+/* ===== AUTH ===== */
+.auth-hero{background:var(--royal);color:var(--white);border-radius:0 0 26px 26px;padding:40px 24px 32px;margin:-16px -16px 18px;overflow:hidden;position:relative}
+.auth-hero-copy{position:relative;z-index:1;max-width:68%}
+.home-hero-mark.auth-hero-mark{right:8px;top:10px;width:clamp(160px,19vw,210px);opacity:1;filter:drop-shadow(0 0 8px rgba(182,255,59,.98)) drop-shadow(0 0 24px rgba(182,255,59,.72));animation:homeLogoFloat 3.4s ease-in-out infinite}
+.auth-hero-mark .badge{fill:rgba(182,255,59,.34);stroke:var(--lime);stroke-width:2.5;filter:drop-shadow(0 0 7px rgba(182,255,59,.98))}
+.auth-hero-mark .orbit{stroke-width:5.5;filter:drop-shadow(0 0 7px rgba(182,255,59,.98));animation:homeLogoOrbit 3.2s linear infinite}
+.auth-hero-mark .orbit.second{filter:drop-shadow(0 0 7px rgba(221,227,234,.96));animation:homeLogoOrbit 3.2s linear infinite reverse}
+.auth-hero-mark .arrow{animation:homeLogoArrow 1.8s ease-in-out infinite}
+.auth-hero-mark .arrow.second{animation:homeLogoArrow 1.8s ease-in-out .9s infinite}
+.auth-hero-mark .coin{filter:drop-shadow(0 0 8px rgba(182,255,59,.98));animation:homeLogoCoin 2.4s ease-in-out infinite}
+.auth-hero-mark .vein{animation:homeLogoVein 2.4s ease-in-out infinite}
+.eyebrow{display:inline-block;background:var(--lime);color:var(--royal-d);font-size:.68rem;font-weight:800;padding:4px 10px;border-radius:999px;margin-bottom:10px}
+.auth-hero h2{font-size:clamp(2rem,7vw,2.65rem);line-height:1.06;font-weight:800;letter-spacing:-.055em;margin-top:2px}
+.auth-hero h2 .headline-accent{color:var(--lime);text-shadow:0 4px 24px rgba(182,255,59,.2)}
+.auth-hero p{margin-top:8px;opacity:.9;font-size:.85rem;line-height:1.45}
+.auth-form{display:flex;flex-direction:column;gap:11px;margin-top:12px}
+.auth-form label{display:flex;flex-direction:column;gap:5px;font-size:.78rem;font-weight:600;color:var(--muted)}
+.auth-form input,.auth-form select{padding:11px 13px;border-radius:11px;border:1.5px solid var(--line);background:var(--white);color:var(--royal-d);outline:none}
+.auth-form input:focus,.auth-form select:focus{border-color:var(--lime)}
+.password-wrap{position:relative;display:flex;align-items:center}
+.password-wrap input{width:100%;padding-right:76px}
+.password-toggle{position:absolute;right:8px;padding:6px 8px;border-radius:8px;color:var(--royal);font-size:.7rem;font-weight:700}
+.password-toggle:hover{background:var(--psoft)}
+.password-hint{font-size:.68rem;color:var(--muted);font-weight:400}
+.password-strength{height:5px;margin-top:6px;background:var(--line);border-radius:999px;overflow:hidden}
+.password-strength span{display:block;width:0;height:100%;background:var(--lime-l);transition:width .2s ease,background .2s ease}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:5px;background:var(--bg);padding:5px;border-radius:13px}
+.tab{padding:9px;border-radius:9px;font-weight:700;color:var(--muted);font-size:.85rem}
+.tab.active{background:var(--royal);color:var(--white)}
+
+/* ===== CARDS & BUTTONS ===== */
+.card{background:rgba(221,227,234,.48);border:1px solid rgba(221,227,234,.88);border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 14px 34px rgba(12,26,43,.12),inset 0 1px rgba(221,227,234,.94);backdrop-filter:blur(20px) saturate(1.55);-webkit-backdrop-filter:blur(20px) saturate(1.55)}
+.card h3{font-size:.96rem;font-weight:700;margin-bottom:8px}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px 16px;border-radius:13px;font-weight:700;font-size:.87rem;margin-top:8px;transition:transform .15s,filter .2s}
+.btn:hover{filter:brightness(1.04)}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--lime);color:var(--royal-d)}
+.btn-ghost{background:var(--white);color:var(--royal);border:1.5px solid var(--royal)}
+.btn-ghost:hover{background:var(--psoft)}
+.btn-danger{background:rgba(0,0,0,.08);color:var(--danger);border:1.5px solid rgba(0,0,0,.18)}
+.row-btns{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:9px}
+.row-btns .btn{margin-top:0}
+.stack{display:flex;flex-direction:column;gap:9px}
+.hint{color:var(--muted);font-size:.78rem;line-height:1.4;display:block}
+.label{font-size:.78rem;font-weight:700;margin:14px 0 7px}
+.tag{display:inline-block;font-size:.68rem;font-weight:700;background:var(--psoft);color:var(--royal);padding:3px 9px;border-radius:999px;margin-bottom:8px}
+.page-head{margin-bottom:12px}
+.page-head h2{font-size:1.3rem;font-weight:800}
+.page-head .hint{margin-top:3px}
+.footer-note{text-align:center;font-size:.66rem;color:var(--muted);margin-top:8px}
+.home-column{display:flex;flex-direction:column;gap:12px;min-width:0}
+.home-column:first-child>.card:last-child{flex:1}
+.home-column>.card{margin-bottom:0}
+
+/* ===== HOME ===== */
+.hero{background:linear-gradient(135deg,var(--royal),var(--royal-d));color:var(--white);border-radius:20px;padding:18px;margin-bottom:12px;overflow:hidden;position:relative}
+.home-hero-mark{position:absolute;z-index:0;right:8px;top:-30px;width:clamp(180px,24vw,230px);height:auto;overflow:visible;opacity:1;filter:drop-shadow(0 0 7px rgba(182,255,59,.95)) drop-shadow(0 0 20px rgba(182,255,59,.62));animation:homeLogoFloat 3.4s ease-in-out infinite}
+.home-hero-mark .badge{fill:rgba(182,255,59,.22);stroke:var(--lime);stroke-width:2;filter:drop-shadow(0 0 5px rgba(182,255,59,.9))}
+.home-hero-mark .orbit{fill:none;stroke:var(--lime);stroke-width:5;stroke-linecap:round;stroke-dasharray:118;stroke-dashoffset:0;filter:drop-shadow(0 0 5px rgba(182,255,59,.95));animation:homeLogoOrbit 3.2s linear infinite}
+.home-hero-mark .orbit.second{stroke:var(--lime-l);filter:drop-shadow(0 0 5px rgba(221,227,234,.95));animation-direction:reverse}
+.home-hero-mark .arrow{fill:var(--lime);transform-origin:center;animation:homeLogoArrow 1.8s ease-in-out infinite}
+.home-hero-mark .arrow.second{fill:var(--lime-l);animation-delay:.9s}
+.home-hero-mark .coin{fill:var(--lime);stroke:var(--lime-l);stroke-width:2;filter:drop-shadow(0 0 7px rgba(182,255,59,.95));transform-origin:60px 60px;animation:homeLogoCoin 2.4s ease-in-out infinite}
+.home-hero-mark .coin-ring{fill:none;stroke:var(--royal-d);stroke-opacity:.3;stroke-width:2}
+.home-hero-mark .leaf{fill:var(--royal-d)}
+.home-hero-mark .vein{fill:none;stroke:var(--lime-l);stroke-width:3;stroke-linecap:round;stroke-dasharray:32;stroke-dashoffset:32;animation:homeLogoVein 2.4s ease-in-out infinite}
+.hero .hint{color:rgba(221,227,234,.75)}
+.hero-top{display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1}
+.hero h2{font-size:1.15rem;font-weight:800;margin-top:2px}
+.lvl{background:var(--lime);color:var(--royal-d);font-weight:800;font-size:.78rem;padding:6px 11px;border-radius:999px}
+.balance{margin-top:12px;display:flex;align-items:center;gap:8px;font-size:.78rem;color:rgba(221,227,234,.82);position:relative;z-index:1}
+.balance strong{font-size:1.85rem;color:var(--lime);font-weight:800;display:inline-flex;align-items:center;gap:6px}
+.xp{margin-top:12px;height:8px;border-radius:999px;background:rgba(221,227,234,.18);overflow:hidden;position:relative;z-index:1}
+.xp-bar{height:100%;border-radius:999px;background:var(--lime);transition:width .7s ease}
+.hero .hint{margin-top:6px;position:relative;z-index:1}
+.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:12px}
+.quick button{display:flex;flex-direction:column;align-items:center;gap:5px;padding:11px 4px;border-radius:14px;background:rgba(221,227,234,.48);border:1px solid rgba(221,227,234,.88);box-shadow:0 10px 24px rgba(12,26,43,.1),inset 0 1px rgba(221,227,234,.92);backdrop-filter:blur(18px) saturate(1.5);-webkit-backdrop-filter:blur(18px) saturate(1.5);font-size:.68rem;font-weight:700;color:var(--royal);transition:transform .15s,background .2s}
+.quick button:hover{background:var(--powder);transform:translateY(-2px)}
+.stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:12px}
+.stat{background:rgba(221,227,234,.48);border:1px solid rgba(221,227,234,.88);border-radius:14px;padding:11px 6px;text-align:center;box-shadow:0 12px 28px rgba(12,26,43,.1),inset 0 1px rgba(221,227,234,.92);backdrop-filter:blur(18px) saturate(1.5);-webkit-backdrop-filter:blur(18px) saturate(1.5);transition:transform .15s}
+.stat:hover{transform:translateY(-2px)}
+.stat b{display:block;font-size:1.15rem;font-weight:800;color:var(--royal)}
+.stat span{font-size:.64rem;color:var(--muted);line-height:1.25;display:block;margin-top:2px}
+.home-focus{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;margin-bottom:14px;border-radius:16px;color:var(--royal-d);background:linear-gradient(110deg,rgba(182,255,59,.62),rgba(221,227,234,.48));border:1px solid rgba(221,227,234,.9);box-shadow:0 12px 30px rgba(12,26,43,.1),inset 0 1px rgba(221,227,234,.9);backdrop-filter:blur(18px) saturate(1.55);-webkit-backdrop-filter:blur(18px) saturate(1.55)}
+.home-focus-copy{min-width:0}
+.home-focus small{display:block;font-size:.66rem;color:var(--royal);font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+.home-focus b{display:block;margin-top:2px;font-size:.87rem}
+.home-focus p{font-size:.72rem;color:var(--muted);margin-top:2px}
+.home-focus .btn{flex:0 0 auto;width:auto;margin:0;padding:9px 13px;background:rgba(0,0,0,.84);color:var(--white);font-size:.73rem}
+.moods{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:9px}
+.moods button{padding:9px 4px;border-radius:13px;font-size:.73rem;font-weight:600;background:var(--bg);border:1.5px solid transparent}
+.moods button:hover{border-color:var(--lime);background:var(--psoft)}
+.mood-msg{margin-top:10px;font-size:.8rem;line-height:1.45;background:var(--psoft);border-left:4px solid var(--lime);padding:9px 11px;border-radius:9px;color:var(--royal-d)}
+.mood-msg:empty{display:none}
+.check{display:flex;align-items:center;gap:9px;width:100%;padding:10px 11px;margin-top:7px;border-radius:13px;border:1.5px solid var(--line);text-align:left;font-size:.82rem;font-weight:500}
+.check span{width:20px;height:20px;border-radius:6px;flex-shrink:0;border:1.5px solid var(--royal-l);display:grid;place-items:center;font-size:.72rem;font-weight:800;color:var(--royal)}
+.check.done{background:var(--psoft);border-color:var(--lime)}
+.check.done span{background:var(--lime);border-color:var(--lime-d);color:var(--royal)}
+.mission-card{background:var(--royal);color:var(--white);border-radius:14px;padding:13px}
+.mission-card b{color:var(--lime-l);font-size:.92rem}
+.mission-card p{font-size:.78rem;opacity:.9;margin-top:4px}
+.mission-done{background:var(--psoft);color:var(--royal-d);padding:9px 11px;border-radius:11px;margin:9px 0;font-weight:700;font-size:.82rem}
+.mission-item{padding:13px;border-radius:13px;background:var(--bg);margin-bottom:9px}
+.mission-item b{font-size:.88rem}
+.mission-item p{margin:4px 0 6px;font-size:.8rem}
+.mission-item small{display:block;color:var(--royal);font-weight:700}
+
+/* ===== LOKASI & RANK ===== */
+.kel-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px}
+.kel{text-align:left;padding:13px;border-radius:15px;background:var(--white);border:1.5px solid var(--line);box-shadow:0 8px 20px -14px rgba(0,0,0,.2);display:flex;flex-direction:column;gap:7px}
+.kel:hover{transform:translateY(-2px);border-color:var(--lime)}
+.kel b{font-size:.8rem;line-height:1.25}
+.kel small{font-size:.65rem;color:var(--muted);line-height:1.35}
+.meter{height:6px;background:var(--line);border-radius:999px;overflow:hidden}
+.meter span{display:block;height:100%;border-radius:999px;background:var(--royal)}
+.rank-row{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:13px;margin-top:7px;background:var(--bg);font-size:.82rem}
+.rank-row .no{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:.76rem;background:var(--royal);color:var(--white);flex-shrink:0}
+.rank-row.gold .no{background:var(--lime);color:var(--royal-d)}
+.rank-row .name{flex:1;font-weight:600}
+.rank-row .xpv{font-weight:800;color:var(--royal);font-size:.78rem}
+.rank-row.me{border:1.5px solid var(--lime);background:var(--psoft)}
+
+/* ===== SCAN ===== */
+.viewfinder{position:relative;height:clamp(280px,48vw,520px);border-radius:20px;overflow:hidden;background:rgba(0,0,0,.9);border:1px solid rgba(221,227,234,.28);box-shadow:0 16px 36px rgba(0,0,0,.18),inset 0 1px rgba(221,227,234,.22);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--white)}
+.viewfinder video,.viewfinder img.shot{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;z-index:0}
+.vf-corners{position:absolute;inset:18px;pointer-events:none;z-index:2;
+  background:
+    linear-gradient(var(--lime),var(--lime)) top left/24px 3px no-repeat,
+    linear-gradient(var(--lime),var(--lime)) top left/3px 24px no-repeat,
+    linear-gradient(var(--lime),var(--lime)) top right/24px 3px no-repeat,
+    linear-gradient(var(--lime),var(--lime)) top right/3px 24px no-repeat,
+    linear-gradient(var(--lime),var(--lime)) bottom left/24px 3px no-repeat,
+    linear-gradient(var(--lime),var(--lime)) bottom left/3px 24px no-repeat,
+    linear-gradient(var(--lime),var(--lime)) bottom right/24px 3px no-repeat,
+    linear-gradient(var(--lime),var(--lime)) bottom right/3px 24px no-repeat}
+.scan-line{position:absolute;left:0;right:0;top:0;height:3px;background:var(--lime);opacity:0;z-index:2}
+.viewfinder.scanning .scan-line{opacity:1;animation:scan 1.5s ease-in-out infinite alternate}
+.vf-icon{font-size:2.9rem;position:relative;z-index:1}
+.vf-status{position:relative;z-index:2;font-size:.78rem;font-weight:700;color:var(--white);text-align:center;min-height:1.2em;padding:5px 14px;background:rgba(0,0,0,.6);border:1px solid rgba(221,227,234,.2);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-radius:999px}
+.vf-status:empty{background:none;padding:0}
+.camera-preview-hint{position:relative;z-index:2;max-width:80%;padding:8px 12px;border:1px solid rgba(221,227,234,.24);border-radius:12px;background:rgba(0,0,0,.6);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);font-size:.78rem;text-align:center}
+.camera-overlay{position:fixed;inset:0;z-index:5000;display:none;align-items:center;justify-content:center;padding:clamp(12px,3vw,28px);background:rgba(0,0,0,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.camera-overlay.active{display:flex}
+.camera-dialog{position:relative;display:flex;flex-direction:column;width:min(100%,1000px);max-height:100%;padding:clamp(10px,2vw,18px);border:1px solid rgba(221,227,234,.3);border-radius:24px;background:rgba(221,227,234,.12);box-shadow:0 28px 100px rgba(0,0,0,.48),inset 0 1px rgba(221,227,234,.28);backdrop-filter:blur(24px) saturate(1.3);-webkit-backdrop-filter:blur(24px) saturate(1.3)}
+.camera-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:2px 2px 12px;color:var(--white)}
+.camera-dialog-head strong{font-family:var(--font-head);font-size:1rem}
+.camera-dialog-head span{display:block;margin-top:2px;color:rgba(221,227,234,.76);font-size:.72rem}
+.camera-dialog-head .btn{width:auto;flex:0 0 auto;white-space:nowrap}
+.camera-live-frame{position:relative;align-self:center;flex:0 0 auto;width:100%;height:min(72vh,740px);min-height:0;overflow:hidden;border:1px solid rgba(221,227,234,.28);border-radius:17px;background:#000}
+.camera-live-frame video{display:block;width:100%;height:100%;object-fit:contain;background:#000}
+.camera-dialog-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-top:12px}
+.camera-dialog-actions .btn{margin:0;min-height:48px}
+.cam-row{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:9px}
+.cam-row .btn{margin-top:0}
+.cam-note{margin-top:9px;font-size:.74rem;line-height:1.45;color:var(--muted);background:var(--bg);padding:9px 11px;border-radius:11px}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{padding:7px 11px;border-radius:999px;font-size:.76rem;font-weight:600;background:var(--bg);border:1.5px solid var(--line)}
+.chip.on{background:var(--royal);color:var(--white);border-color:var(--royal)}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--bg);padding:5px;border-radius:13px}
+.seg button{padding:9px;border-radius:9px;font-weight:700;font-size:.8rem;color:var(--muted)}
+.seg button.on{background:var(--lime);color:var(--royal-d)}
+.slider{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:999px;background:var(--line);outline:none;margin:7px 0 13px}
+.slider::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--lime);border:4px solid var(--royal);cursor:pointer}
+.slider::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--lime);border:3px solid var(--royal);cursor:pointer}
+.result{margin-top:14px;padding:16px;border-radius:16px}
+.result.ok{background:var(--white);border:1.5px solid var(--lime);box-shadow:0 10px 26px -14px rgba(0,0,0,.22)}
+.result.bad{background:rgba(0,0,0,.05);border:1.5px solid rgba(0,0,0,.18)}
+.result h3{font-size:.95rem;font-weight:800;margin-bottom:9px}
+.result p{font-size:.82rem;line-height:1.45}
+.res-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:11px}
+.res-grid div{background:var(--bg);border-radius:11px;padding:9px}
+.res-grid small{display:block;font-size:.66rem;color:var(--muted)}
+.res-grid b{font-size:1rem;font-weight:800;color:var(--royal)}
+.formula{font-size:.72rem;color:var(--muted);background:var(--bg);padding:9px 11px;border-radius:11px}
+
+/* ===== MARKET ===== */
+.balance-mini{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-radius:14px;margin-bottom:11px;background:var(--royal);color:var(--white);font-size:.82rem}
+.balance-mini b{color:var(--lime-l);font-size:1.05rem;display:inline-flex;align-items:center;gap:5px}
+.items{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:12px 0}
+.item{text-align:left;padding:13px;border-radius:15px;background:var(--white);border:1.5px solid var(--line);display:flex;flex-direction:column;gap:3px}
+.item:hover{transform:translateY(-2px);border-color:var(--lime)}
+.item .ic-wrap{font-size:1.55rem}
+.item b{font-size:.78rem;line-height:1.25;margin-top:3px}
+.item small{font-size:.64rem;color:var(--muted);line-height:1.35}
+.item em{margin-top:auto;padding-top:7px;font-style:normal;font-weight:800;color:var(--royal);font-size:.78rem;display:flex;align-items:center;gap:5px}
+.hist{display:flex;justify-content:space-between;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--line);font-size:.8rem}
+.hist:last-child{border-bottom:none}
+.hist small{display:block;color:var(--muted);font-size:.66rem}
+.amt{font-weight:800;display:inline-flex;align-items:center;gap:4px}
+.amt.in{color:var(--lime-d)}
+.amt.out{color:var(--danger)}
+
+/* ===== PROFIL ===== */
+.profile{text-align:center}
+.avatar-wrap{position:relative;width:72px;height:72px;margin:0 auto 9px}
+.avatar{width:72px;height:72px;border-radius:50%;background:var(--lime);color:var(--royal-d);display:grid;place-items:center;font-size:1.8rem;font-weight:800;box-shadow:0 0 0 5px var(--psoft);background-size:cover;background-position:center;overflow:hidden}
+.avatar-edit{position:absolute;right:-2px;bottom:-2px;width:24px;height:24px;border-radius:50%;background:var(--royal);color:var(--white);display:grid;place-items:center;border:2px solid var(--white)}
+.profile h2{font-size:1.15rem;font-weight:800}
+.lvl-line{display:inline-block;margin-top:7px;padding:6px 11px;border-radius:999px;background:var(--royal);color:var(--lime-l);font-size:.72rem;font-weight:700}
+.badges{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.badge{display:flex;flex-direction:column;align-items:center;gap:5px;padding:11px 5px;border-radius:13px;background:var(--bg)}
+.badge:hover{transform:translateY(-2px)}
+.badge span{font-size:1.5rem;filter:grayscale(1);opacity:.45}
+.badge small{font-size:.62rem;text-align:center;font-weight:600;color:var(--muted);line-height:1.25}
+.badge.on{background:var(--psoft);border:1.5px solid var(--lime)}
+.badge.on span{filter:none;opacity:1}
+.badge.on small{color:var(--royal)}
+
+/* ===== EDUKASI ===== */
+.lesson{display:flex;align-items:center;gap:13px;width:100%;text-align:left;padding:14px;margin-bottom:10px;border-radius:15px;background:var(--white);border:1.5px solid var(--line);box-shadow:0 8px 20px -14px rgba(0,0,0,.2)}
+.lesson:hover{transform:translateY(-2px);border-color:var(--lime)}
+.lesson .num{width:36px;height:36px;border-radius:11px;flex-shrink:0;display:grid;place-items:center;font-weight:800;background:var(--royal);color:var(--lime-l)}
+.lesson.done .num{background:var(--lime);color:var(--royal-d)}
+.lesson b{font-size:.88rem;display:block}
+.lesson small{color:var(--muted);font-size:.72rem;line-height:1.35;display:block;margin-top:2px}
+.done-tag{margin-left:auto;font-size:.68rem;font-weight:700;color:var(--lime-d);white-space:nowrap}
+.opts{display:flex;flex-direction:column;gap:7px;margin:11px 0}
+.opt{text-align:left;padding:11px 13px;border-radius:11px;background:var(--bg);border:1.5px solid transparent;font-size:.8rem;font-weight:500}
+.opt:hover{border-color:var(--lime);background:var(--psoft)}
+.q{font-size:.86rem;margin-top:11px}
+
+/* ===== TENTANG ===== */
+.problem-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px}
+.problem-grid div{background:var(--royal);color:var(--white);border-radius:15px;padding:13px}
+.problem-grid b{display:block;font-size:1.2rem;color:var(--lime-l);font-weight:800}
+.problem-grid span{font-size:.68rem;opacity:.9;line-height:1.35;display:block;margin-top:2px}
+.flow{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.flow div{padding:9px 11px;border-radius:11px;background:var(--bg);font-size:.73rem;font-weight:600;display:flex;gap:7px;align-items:center}
+.flow em{font-style:normal;width:20px;height:20px;border-radius:50%;flex-shrink:0;background:var(--lime);color:var(--royal-d);display:grid;place-items:center;font-size:.68rem;font-weight:800}
+.penta{display:flex;flex-direction:column;gap:7px}
+.penta button{text-align:left;padding:11px 13px;border-radius:13px;background:var(--bg);border:1.5px solid transparent}
+.penta button:hover{border-color:var(--lime)}
+.penta button.open{background:var(--royal);color:var(--white)}
+.penta b{font-size:.84rem;display:block}
+.penta small{font-size:.7rem;opacity:.8}
+.penta p{font-size:.76rem;line-height:1.45;margin-top:7px}
+.road-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:11px}
+.road-tabs button{padding:9px 4px;border-radius:11px;font-size:.7rem;font-weight:700;background:var(--bg);color:var(--muted)}
+.road-tabs button.on{background:var(--lime);color:var(--royal-d)}
+.road-body ul{padding-left:17px;margin-top:7px}
+.road-body li{font-size:.8rem;line-height:1.5;margin-bottom:3px}
+.tbl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:11px}
+.tbl-grid button{padding:13px 7px;border-radius:15px;text-align:center;background:var(--white);border:1.5px solid var(--line)}
+.tbl-grid button:hover{border-color:var(--lime);transform:translateY(-2px)}
+.tbl-grid b{font-size:.78rem;display:block;color:var(--royal)}
+.team{font-size:.8rem;line-height:1.7}
+.team-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+.team-heading h3{margin:0}
+.team-heading span{padding:5px 10px;border:1px solid rgba(182,255,59,.55);border-radius:999px;background:rgba(182,255,59,.2);color:var(--royal-d);font-size:.66rem;font-weight:800;white-space:nowrap}
+.team-members{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;width:min(100%,720px);margin:0 auto}
+.team-member{display:grid;grid-template-columns:minmax(96px,42%) minmax(0,1fr);align-items:center;gap:14px;min-width:0;padding:12px;border:1px solid rgba(221,227,234,.9);border-radius:20px;background:linear-gradient(145deg,rgba(221,227,234,.58),rgba(221,227,234,.22));box-shadow:0 14px 34px rgba(12,26,43,.12),inset 0 1px rgba(221,227,234,.94);backdrop-filter:blur(22px) saturate(1.6);-webkit-backdrop-filter:blur(22px) saturate(1.6)}
+.team-photo{position:relative;display:block;min-width:0;height:158px;margin:0;overflow:hidden;border:1px solid rgba(221,227,234,.88);border-radius:16px;background:#fff;box-shadow:inset 0 1px rgba(221,227,234,.94),0 8px 18px rgba(0,0,0,.05);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.team-photo img{position:absolute;inset:0;display:block;width:auto;height:auto;max-width:100%;max-height:100%;margin:auto;object-fit:contain;object-position:center center;filter:drop-shadow(0 7px 9px rgba(0,0,0,.12))}
+.team-member-info{min-width:0}
+.team-member-index{display:inline-flex;align-items:center;gap:5px;margin-bottom:8px;padding:4px 8px;border:1px solid rgba(182,255,59,.55);border-radius:999px;background:rgba(182,255,59,.2);color:var(--royal-d);font-size:.6rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+.team-member-name{display:block;color:var(--royal-d);font-family:var(--font-head);font-size:clamp(.88rem,1.3vw,1.08rem);font-weight:800;line-height:1.2;overflow-wrap:anywhere}
+.team-member-id{display:inline-block;margin-top:8px;padding:4px 8px;border:1px solid rgba(0,0,0,.08);border-radius:8px;background:rgba(221,227,234,.62);color:var(--muted);font-size:.62rem;font-weight:700}
+.team-member-school{display:block;margin-top:7px;color:var(--muted);font-size:.66rem;font-weight:600}
+.kv{display:flex;justify-content:space-between;gap:9px;padding:9px 0;border-bottom:1px solid var(--line);font-size:.82rem}
+.kv b{color:var(--royal)}
+
+/* ===== BOTTOM NAV ===== */
+.bottomnav{--glass-x:50%;--glass-y:50%;position:fixed;bottom:calc(12px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:min(420px,calc(100% - 32px));z-index:60;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:center;gap:4px;padding:7px;background:rgba(221,227,234,.48);border:1px solid rgba(221,227,234,.92);border-radius:999px;box-shadow:0 16px 42px rgba(12,26,43,.2),inset 0 1px rgba(221,227,234,.94);backdrop-filter:blur(24px) saturate(1.7);-webkit-backdrop-filter:blur(24px) saturate(1.7);isolation:isolate;overflow:hidden}
+.bottomnav::before{content:"";position:absolute;inset:0;z-index:0;border-radius:inherit;background:radial-gradient(110px circle at var(--glass-x) var(--glass-y),rgba(182,255,59,.45),rgba(221,227,234,.24) 45%,transparent 75%);opacity:0;transition:opacity .2s;pointer-events:none}
+.bottomnav.is-pointing::before{opacity:1}
+.nav-btn{position:relative;z-index:1;display:flex;min-width:0;min-height:48px;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:4px 2px;border-radius:999px;color:var(--muted);font-size:.62rem;font-weight:700;transition:color .2s,background .2s,transform .2s}
+.nav-btn .ic{width:20px;height:20px}
+.nav-btn.on{background:rgba(182,255,59,.26);color:var(--royal)}
+.nav-btn:focus-visible,.nav-scan:focus-visible{outline:3px solid var(--lime);outline-offset:2px}
+.nav-scan{position:relative;z-index:1;width:50px;height:50px;margin:0 auto;border-radius:50%;background:linear-gradient(145deg,var(--lime-l),var(--lime));color:var(--royal-d);display:grid;place-items:center;box-shadow:0 4px 12px rgba(0,0,0,.24);transition:transform .2s,box-shadow .2s}
+.nav-scan .ic{width:22px;height:22px}
+.nav-scan:hover{transform:translateY(-2px);box-shadow:0 7px 16px rgba(0,0,0,.35)}
+
+/* ===== MODAL ===== */
+.modal-overlay{position:fixed;inset:0;z-index:4000;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.38);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:20px}
+.modal-overlay.active{display:flex}
+.modal-box{background:rgba(221,227,234,.78);border:1px solid rgba(221,227,234,.9);box-shadow:0 20px 60px rgba(0,0,0,.18);backdrop-filter:blur(22px) saturate(1.4);-webkit-backdrop-filter:blur(22px) saturate(1.4);border-radius:22px;padding:22px;width:100%;max-width:370px;max-height:85vh;overflow-y:auto;animation:rise .25s ease both}
+.modal-box h3{font-size:1.05rem;font-weight:800;margin-bottom:7px}
+.modal-box p{font-size:.83rem;line-height:1.5;margin-bottom:7px}
+
+/* ===== ANIMASI ===== */
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes logoPop{to{opacity:1;transform:scale(1)}}
+@keyframes leafIn{from{opacity:0;transform:scale(.72) rotate(-12deg)}to{opacity:1;transform:scale(1) rotate(0)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes splashEntrance{to{opacity:1;transform:translateY(0)}}
+@keyframes load{to{transform:scaleX(1)}}
+@keyframes scan{from{top:0}to{top:calc(100% - 3px)}}
+@keyframes sloganCycle{0%,24%{opacity:1;transform:translateY(0)}30%,100%{opacity:0;transform:translateY(-5px)}}
+@keyframes homeLogoFloat{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-8px) rotate(4deg)}}
+@keyframes homeLogoOrbit{0%{stroke-dashoffset:118}50%,100%{stroke-dashoffset:0}}
+@keyframes homeLogoArrow{0%,100%{transform:scale(.88)}50%{transform:scale(1.12)}}
+@keyframes homeLogoCoin{0%,100%{transform:scale(.96)}50%{transform:scale(1.04)}}
+@keyframes homeLogoVein{0%,25%{stroke-dashoffset:32}65%,100%{stroke-dashoffset:0}}
+@keyframes splashFloat{0%,100%{transform:translateY(0) rotate(0) scale(1)}35%{transform:translateY(-14px) rotate(-3deg) scale(1.04)}70%{transform:translateY(-5px) rotate(2deg) scale(1.015)}}
+
+/* ===== RESPONSIF: MENYESUAIKAN PERANGKAT ===== */
+@media (min-width:700px){
+  :root{--app-w:760px}
+  .home-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 14px;align-items:stretch}
+  .kel-grid{grid-template-columns:repeat(3,1fr)}
+  .items{grid-template-columns:repeat(3,1fr)}
+  .badges{grid-template-columns:repeat(6,1fr)}
+  .problem-grid{grid-template-columns:repeat(4,1fr)}
+  main{padding:18px 26px 26px}
+  .auth-hero{margin:-16px -26px 16px;padding:46px 30px 36px}
+}
+@media (max-width:520px){
+  .brand-slogan{max-width:150px;font-size:.53rem}
+  .home-hero-mark{right:-16px;top:-20px;width:clamp(138px,40vw,172px)}
+  .home-hero-mark.auth-hero-mark{right:-18px;top:24px;width:clamp(132px,36vw,148px)}
+  .auth-hero-copy{max-width:64%}
+  .camera-overlay{padding:8px}
+  .camera-dialog{padding:9px;border-radius:18px}
+  .camera-live-frame{height:min(70vh,680px);min-height:0}
+  .camera-dialog-actions{gap:7px;padding-top:9px}
+  .camera-dialog-actions .btn{padding:10px 8px;font-size:.76rem}
+  .team-members{gap:8px}
+  .team-member{grid-template-columns:1fr;gap:9px;padding:8px;border-radius:16px}
+  .team-photo{height:clamp(88px,26vw,112px);border-radius:12px}
+  .team-member-info{text-align:center;padding:0 2px 4px}
+  .team-member-index{margin-bottom:6px;padding:3px 7px;font-size:.54rem}
+  .team-member-name{font-size:clamp(.72rem,3.3vw,.88rem)}
+  .team-member-id{margin-top:6px;padding:3px 5px;font-size:.52rem}
+  .team-member-school{margin-top:5px;font-size:.58rem}
+  .team-heading{margin-bottom:10px}
+  .team-heading span{font-size:.58rem;padding:4px 8px}
+}
+@media (min-width:1100px){
+  :root{--app-w:1200px}
+  body{align-items:flex-start}
+  #app{display:block;min-height:100vh;min-height:100dvh;padding-bottom:calc(108px + env(safe-area-inset-bottom))}
+  main{max-width:1080px;margin:0 auto;padding:22px clamp(26px,4vw,52px) 30px}
+  .topbar{padding:16px clamp(26px,4vw,52px)}
+  .kel-grid{grid-template-columns:repeat(3,1fr)}
+  .items{grid-template-columns:repeat(3,1fr)}
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
+  #splash.ready .splash-inner{opacity:1;transform:none}
+  #splash.ready .splash-inner{animation:splashEntrance .7s cubic-bezier(.2,.8,.2,1) forwards !important}
+  #splash.ready .splash-logo{animation:splashFloat 1.7s ease-in-out .5s infinite !important}
+  #splash.ready .eco-mark .orbit{animation:draw 1s cubic-bezier(.65,0,.35,1) forwards .15s !important}
+  #splash.ready .eco-mark .orbit.second{animation-delay:.45s !important}
+  #splash.ready .eco-mark .arrow{animation:logoPop .4s ease forwards 1s !important}
+  #splash.ready .eco-mark .arrow.second{animation-delay:1.5s !important}
+  #splash.ready .eco-mark .coin{animation:leafIn .65s cubic-bezier(.2,.8,.2,1) forwards 1.05s !important}
+  #splash.ready .eco-mark .vein{animation:draw .6s ease forwards 1.55s !important}
+  #splash.ready .splash-bar span{animation:load 5.8s cubic-bezier(.2,.65,.25,1) forwards !important}
+  .brand-slogan span{animation:none;opacity:0}
+  .brand-slogan span:first-child{opacity:1}
+  .home-hero-mark{animation:homeLogoFloat 3.4s ease-in-out infinite !important}
+  .home-hero-mark .orbit{animation:homeLogoOrbit 3.2s linear infinite !important}
+  .home-hero-mark .orbit.second{animation:homeLogoOrbit 3.2s linear infinite reverse !important}
+  .home-hero-mark .arrow{animation:homeLogoArrow 1.8s ease-in-out infinite !important}
+  .home-hero-mark .arrow.second{animation:homeLogoArrow 1.8s ease-in-out .9s infinite !important}
+  .home-hero-mark .coin{animation:homeLogoCoin 2.4s ease-in-out infinite !important}
+  .home-hero-mark .vein{animation:homeLogoVein 2.4s ease-in-out infinite !important}
+  .auth-hero-mark{animation:homeLogoFloat 3.4s ease-in-out infinite !important}
+  .auth-hero-mark .orbit{animation:homeLogoOrbit 3.2s linear infinite !important}
+  .auth-hero-mark .orbit.second{animation:homeLogoOrbit 3.2s linear infinite reverse !important}
+  .auth-hero-mark .arrow{animation:homeLogoArrow 1.8s ease-in-out infinite !important}
+  .auth-hero-mark .arrow.second{animation:homeLogoArrow 1.8s ease-in-out .9s infinite !important}
+  .auth-hero-mark .coin{animation:homeLogoCoin 2.4s ease-in-out infinite !important}
+  .auth-hero-mark .vein{animation:homeLogoVein 2.4s ease-in-out infinite !important}
+}
+
+.card,.stat,.kel,.lesson,.tbl-grid button,.auth-form input,.auth-form select,.tabs,.quick button,.check,.moods button,.mission-item,.rank-row,.opt,.flow div,.penta button,.road-tabs button,.road-body,.result.ok,.result.bad,.seg,.chip,.home-focus{
+  background-color:rgba(221,227,234,.42);
+  border-color:rgba(221,227,234,.9);
+  box-shadow:0 14px 36px rgba(12,26,43,.12),inset 0 1px rgba(221,227,234,.94);
+  backdrop-filter:blur(22px) saturate(1.6);
+  -webkit-backdrop-filter:blur(22px) saturate(1.6);
+}
+.tbl-grid button{background:#fff}
+.auth-hero,.hero,.mission-card,.problem-grid div,.penta button.open,.balance-mini{
+  background:linear-gradient(135deg,rgba(12,26,43,.97),rgba(12,26,43,.88));
+  color:var(--white);
+  border:1px solid rgba(221,227,234,.22);
+  box-shadow:0 18px 42px rgba(0,0,0,.2),inset 0 1px rgba(221,227,234,.2);
+  backdrop-filter:blur(18px) saturate(1.3);
+  -webkit-backdrop-filter:blur(18px) saturate(1.3);
+}
+.btn-primary,.nav-scan,.eyebrow,.lvl,.road-tabs button.on{
+  background:linear-gradient(135deg,rgba(221,227,234,.94),rgba(182,255,59,.88));
+  border:1px solid rgba(221,227,234,.78);
+  box-shadow:0 10px 26px rgba(0,0,0,.12),inset 0 1px rgba(221,227,234,.72);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+}
+.btn-ghost{
+  background:rgba(221,227,234,.68);
+  border-color:rgba(221,227,234,.9);
+  box-shadow:0 8px 24px rgba(0,0,0,.08),inset 0 1px rgba(221,227,234,.9);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+}
+.tab.active{background:linear-gradient(135deg,var(--lime-l),var(--lime));color:var(--royal-d);border:1px solid rgba(0,0,0,.08);box-shadow:0 6px 18px rgba(0,0,0,.1),inset 0 1px rgba(221,227,234,.65)}
+.auth-form input,.auth-form select{border:1px solid rgba(0,0,0,.12)}
+.psoft,.tag{background:rgba(221,227,234,.55)}
+.modal-box{background:rgba(221,227,234,.78)}
+.road-body{
+  margin:0 2px 2px;
+  padding:16px 20px;
+  border:1px solid rgba(221,227,234,.94);
+  border-radius:16px;
+  background:linear-gradient(135deg,rgba(221,227,234,.48),rgba(221,227,234,.38));
+  box-shadow:0 14px 34px rgba(0,0,0,.09),inset 0 1px rgba(221,227,234,.94);
+  backdrop-filter:blur(24px) saturate(1.55);
+  -webkit-backdrop-filter:blur(24px) saturate(1.55);
+}
+.road-body ul{padding-left:20px}
+.card .card,
+.card .stat,
+.card .kel,
+.card .lesson,
+.card .tbl-grid button,
+.card .quick button,
+.card .check,
+.card .moods button,
+.card .mission-card,
+.card .mission-item,
+.card .rank-row,
+.card .opt,
+.card .flow div,
+.card .penta button,
+.card .road-tabs button,
+.card .road-body,
+.card .result.ok,
+.card .result.bad,
+.card .seg,
+.card .chip,
+.card .home-focus,
+.card .problem-grid div,
+.card .team-member,
+.card .team-photo,
+.card .res-grid div,
+.card .formula,
+.card .cam-note,
+.card .tabs{
+  background:#fff;
+  color:var(--royal-d);
+}
+.card .problem-grid b,
+.card .mission-card b,
+.card .balance-mini b{
+  color:var(--royal-d);
+}
+.card .balance-mini{
+  background:#fff;
+  color:var(--royal-d);
+}
+.card .team-member-index,
+.card .team-member-id{
+  background:#fff;
+}
+</style>
+</head>
+<body class="is-auth">
+
+<div id="splash">
+  <div class="splash-inner">
+    <svg class="splash-logo eco-mark" viewBox="0 0 120 120" aria-hidden="true">
+      <circle cx="60" cy="60" r="55" class="badge"/>
+      <path d="M83 25 A42 42 0 0 0 28 39" class="orbit"/>
+      <path d="M37 96 A42 42 0 0 0 92 81" class="orbit second"/>
+      <path d="M23 34 L29 46 L37 35 Z" class="arrow"/>
+      <path d="M97 86 L91 74 L83 85 Z" class="arrow second"/>
+      <circle cx="60" cy="60" r="23" class="coin"/>
+      <circle cx="60" cy="60" r="18" class="coin-ring"/>
+      <path d="M58 72 C49 67 49 57 54 52 C59 47 67 49 70 54 C71 62 67 69 58 72 Z" class="leaf"/>
+      <path d="M53 65 C59 60 63 56 68 51" class="vein"/>
+    </svg>
+    <h1>EcoLoop</h1>
+    <p class="splash-tag">Bloom or Wither: Sampah Menjadi Energi</p>
+    <div class="splash-bar"><span></span></div>
+    <small>Ketuk untuk lanjut</small>
+  </div>
+</div>
+
+<div id="app">
+  <nav class="bottomnav">
+    <button class="nav-btn" data-action="go" data-go="home"><span class="ic" data-ic="home"></span><span>Home</span></button>
+    <button class="nav-btn" data-action="go" data-go="lokasi"><span class="ic" data-ic="map"></span><span>Lokasi</span></button>
+    <button class="nav-scan" data-action="go" data-go="scan" aria-label="Scan sampah"><span class="ic" data-ic="camera"></span></button>
+    <button class="nav-btn" data-action="go" data-go="market"><span class="ic" data-ic="gift"></span><span>Market</span></button>
+    <button class="nav-btn" data-action="go" data-go="profil"><span class="ic" data-ic="user"></span><span>Profil</span></button>
+  </nav>
+
+  <header class="topbar">
+    <div class="brand">
+      <svg class="brand-mark eco-mark" viewBox="0 0 120 120" aria-hidden="true">
+        <circle cx="60" cy="60" r="55" class="badge"/>
+        <path d="M83 25 A42 42 0 0 0 28 39" class="orbit"/>
+        <path d="M37 96 A42 42 0 0 0 92 81" class="orbit second"/>
+        <path d="M23 34 L29 46 L37 35 Z" class="arrow"/>
+        <path d="M97 86 L91 74 L83 85 Z" class="arrow second"/>
+        <circle cx="60" cy="60" r="23" class="coin"/>
+        <circle cx="60" cy="60" r="18" class="coin-ring"/>
+        <path d="M58 72 C49 67 49 57 54 52 C59 47 67 49 70 54 C71 62 67 69 58 72 Z" class="leaf"/>
+        <path d="M53 65 C59 60 63 56 68 51" class="vein"/>
+      </svg>
+      <span class="brand-copy">
+        <span>EcoLoop</span>
+        <span class="brand-slogan" aria-label="Pilah hari ini, energi untuk esok">
+          <span>Pilah hari ini, energi untuk esok.</span>
+          <span>Satu aksi, bumi lebih berarti.</span>
+          <span>Sampah terpilah, masa depan cerah.</span>
+        </span>
+      </span>
+    </div>
+    <button class="pill" id="topBal" data-action="go" data-go="market"></button>
+  </header>
+
+  <main>
+    <section class="view" id="view-auth">
+      <div class="auth-hero">
+        <svg class="home-hero-mark auth-hero-mark eco-mark" viewBox="0 0 120 120" aria-hidden="true">
+          <circle cx="60" cy="60" r="55" class="badge"/>
+          <path d="M83 25 A42 42 0 0 0 28 39" class="orbit"/>
+          <path d="M37 96 A42 42 0 0 0 92 81" class="orbit second"/>
+          <path d="M23 34 L29 46 L37 35 Z" class="arrow"/>
+          <path d="M97 86 L91 74 L83 85 Z" class="arrow second"/>
+          <circle cx="60" cy="60" r="23" class="coin"/>
+          <circle cx="60" cy="60" r="18" class="coin-ring"/>
+          <path d="M58 72 C49 67 49 57 54 52 C59 47 67 49 70 54 C71 62 67 69 58 72 Z" class="leaf"/>
+          <path d="M53 65 C59 60 63 56 68 51" class="vein"/>
+        </svg>
+        <div class="auth-hero-copy">
+          <span class="eyebrow">Gamified Citizen Science</span>
+          <h2>Pilah, <span class="headline-accent">Olah,</span><br/>Bangkitkan.</h2>
+          <p>Ubah sampah terpilah jadi energi. Setiap aksi berarti.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="tabs">
+          <button class="tab active" data-action="auth-tab" data-tab="login">Masuk</button>
+          <button class="tab" data-action="auth-tab" data-tab="register">Daftar</button>
+        </div>
+        <form id="form-login" class="auth-form">
+          <label>Email<input type="email" required autocomplete="email" placeholder="nama@email.com"/></label>
+          <label>Kata sandi
+            <span class="password-wrap"><input id="login-password" type="password" required autocomplete="current-password" placeholder="Kata sandi"/><button class="password-toggle" type="button" data-action="toggle-password" data-target="login-password" aria-label="Tampilkan kata sandi">Lihat</button></span>
+          </label>
+          <button class="btn btn-primary" type="submit">Masuk</button>
+        </form>
+        <form id="form-register" class="auth-form hidden">
+          <label>Nama lengkap<input id="reg-name" required autocomplete="name" placeholder="Nama kamu"/></label>
+          <label>Email<input id="reg-email" type="email" required autocomplete="email" placeholder="nama@email.com"/></label>
+          <label>Kata sandi
+            <span class="password-wrap"><input id="reg-password" type="password" required minlength="8" autocomplete="new-password" placeholder="Minimal 8 karakter"/><button class="password-toggle" type="button" data-action="toggle-password" data-target="reg-password" aria-label="Tampilkan kata sandi">Lihat</button></span>
+            <span class="password-hint">Gunakan minimal 8 karakter.</span>
+            <span class="password-strength" aria-hidden="true"><span id="password-strength-fill"></span></span>
+          </label>
+          <label>Konfirmasi kata sandi
+            <span class="password-wrap"><input id="reg-confirm-password" type="password" required minlength="8" autocomplete="new-password" placeholder="Ulangi kata sandi"/><button class="password-toggle" type="button" data-action="toggle-password" data-target="reg-confirm-password" aria-label="Tampilkan kata sandi">Lihat</button></span>
+          </label>
+          <label>Kamu termasuk
+            <select id="reg-group">
+              <option>Pelajar SMA/SMK</option>
+              <option>Mahasiswa</option>
+              <option>Rumah Tangga</option>
+            </select>
+          </label>
+          <label>Kelurahan <select id="reg-kel"></select></label>
+          <button class="btn btn-primary" type="submit">Daftar</button>
+        </form>
+        <button class="btn btn-ghost" data-action="demo">Coba demo</button>
+      </div>
+    </section>
+
+    <section class="view hidden" id="view-home"></section>
+    <section class="view hidden" id="view-lokasi"></section>
+    <section class="view hidden" id="view-scan"></section>
+    <section class="view hidden" id="view-market"></section>
+    <section class="view hidden" id="view-profil"></section>
+    <section class="view hidden" id="view-edu"></section>
+    <section class="view hidden" id="view-tentang"></section>
+  </main>
+</div>
+
+<div id="modal" class="modal-overlay"><div class="modal-box" id="modal-box"></div></div>
+<div id="camera-modal" class="camera-overlay" aria-hidden="true">
+  <section class="camera-dialog" role="dialog" aria-modal="true" aria-labelledby="camera-modal-title">
+    <header class="camera-dialog-head">
+      <div><strong id="camera-modal-title">Kamera EcoLoop</strong><span>Posisikan sampah di dalam bingkai</span></div>
+      <button class="btn btn-ghost" type="button" data-action="camera-minimize" aria-label="Kecilkan tampilan kamera">Kecilkan</button>
+    </header>
+    <div class="camera-live-frame"><video id="camera-modal-video" autoplay playsinline muted></video></div>
+    <div class="camera-dialog-actions">
+      <button class="btn btn-ghost" type="button" data-action="stop-cam">Matikan kamera</button>
+      <button class="btn btn-primary" type="button" data-action="capture-photo">Ambil Foto</button>
+    </div>
+  </section>
+</div>
+<div id="toast"></div>
+<input type="file" id="avatar-input" accept="image/*" class="hidden" />
+<canvas id="cam-canvas" class="hidden"></canvas>
+
+<script>
+(() => {
+  'use strict';
+
+  const ICONS = {
+    home:   '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg>',
+    map:    '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20l-6-2V6l6 2 6-2 6 2v12l-6-2-6 2z"/><path d="M9 8v12M15 6v12"/></svg>',
+    camera: '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v12H4z"/><circle cx="12" cy="14" r="3.5"/></svg>',
+    gift:   '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="9" width="18" height="12" rx="1"/><path d="M3 13h18M12 9v12"/><path d="M12 9C9 9 7.5 7.5 7.5 5.8A2.2 2.2 0 0 1 9.7 3.6C11.5 3.6 12 6 12 9z"/><path d="M12 9c3 0 4.5-1.5 4.5-3.2A2.2 2.2 0 0 0 14.3 3.6C12.5 3.6 12 6 12 9z"/></svg>',
+    user:   '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>',
+    edit:   '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>'
+  };
+  function icon(name){ return ICONS[name] || ''; }
+  function coinIcon(size){
+    size = size || 18;
+    return '<svg class="ic" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" aria-hidden="true">'
+      + '<circle cx="12" cy="12" r="10" fill="#B6FF3B" stroke="#000000" stroke-width="1.4"/>'
+      + '<circle cx="12" cy="12" r="6.4" fill="none" stroke="#000000" stroke-width="1.1"/>'
+      + '<path d="M12 7.3v9.4M9.3 9.5c0-1 1-1.6 2.7-1.6s2.7.7 2.7 1.6c0 2.1-5.4 1-5.4 3 0 1 1.1 1.7 2.7 1.7s2.8-.7 2.8-1.7" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round"/>'
+      + '</svg>';
+  }
+  document.querySelectorAll('[data-ic]').forEach(el => { el.innerHTML = icon(el.dataset.ic); });
+
+  const LEVEL_XP = 1000;
+  const LEVEL_TITLES = ['Penjaga Sungai','Pejuang Pilah','Penggerak Energi','Digital Heroes'];
+  const CO2_FACTOR = 0.33;
+
+  const KELURAHAN = [
+    { id:'mekarsari',  name:'Kel. Mekar Sari',    health:62, potensi:'Tinggi' },
+    { id:'tanahbaru',  name:'Kel. Tanah Baru',    health:48, potensi:'Sedang' },
+    { id:'sukamaju',   name:'Kel. Suka Maju',     health:71, potensi:'Tinggi' },
+    { id:'bukithijau', name:'Kel. Bukit Hijau',   health:55, potensi:'Sedang' },
+    { id:'pasirputih', name:'Kel. Pasir Putih',   health:39, potensi:'Rendah' },
+    { id:'cempaka',    name:'Kel. Cempaka Indah', health:66, potensi:'Tinggi' }
+  ];
+
+  const CATS = {
+    kertas:  { label:'Kertas kering',  icon:'📄', moist:[12,22], rdf:true },
+    tekstil: { label:'Tekstil residu', icon:'👕', moist:[18,28], rdf:true },
+    plastik: { label:'Plastik residu', icon:'🧴', moist:[5,12],  rdf:true },
+    pet:     { label:'PET & logam',    icon:'🔩', moist:[2,6],   rdf:false,
+               note:'Setor ke bank sampah, bukan jalur RDF.' },
+    organik: { label:'Organik basah',  icon:'🍂', moist:[60,70], rdf:false,
+               note:'Kadar air terlalu tinggi untuk RDF. Olah dengan komposter.' }
+  };
+
+  const MISSIONS = [
+    { id:'m1', kel:'mekarsari', title:'Pilah kertas di RT 03', target:'kertas', minKg:1, xp:150,
+      desc:'Minimal 1 kg kertas kering, lalu scan.' },
+    { id:'m2', kel:'sukamaju', title:'Setor residu tekstil', target:'tekstil', minKg:1, xp:150,
+      desc:'Minimal 1 kg tekstil residu kering.' },
+    { id:'m3', kel:'pasirputih', title:'Plastik residu warung', target:'plastik', minKg:1, xp:120,
+      desc:'Kumpulkan kresek dan sachet bersih.' },
+    { id:'m4', kel:'cempaka', title:'Aksi mandiri: kertas kantor', target:'kertas', minKg:0.5, xp:90,
+      desc:'Minimal 0,5 kg kertas kantor.' }
+  ];
+
+  const ITEMS = [
+    { id:'token',    cat:'energi', name:'Token Listrik 20K',   cost:2000, ic:'energi', desc:'Via mitra PLN' },
+    { id:'emoney',   cat:'emoney', name:'E-Money 10K',         cost:1000, ic:'emoney', desc:'Mitra pembayaran' },
+    { id:'sabun',    cat:'produk', name:'Sabun Organik UMKM',  cost:500,  ic:'produk', desc:'Produk UMKM lokal' },
+    { id:'tote',     cat:'produk', name:'Tas Tote Eco',        cost:800,  ic:'produk', desc:'Tekstil daur ulang' },
+    { id:'mangrove', cat:'donasi', name:'Donasi Bibit Mangrove', cost:300,  ic:'donasi', desc:'Program penanaman' }
+  ];
+  const ITEM_EMOJI = { energi:'⚡', emoney:'💳', produk:'🧼', donasi:'🌿' };
+  const FILTERS = [['semua','Semua'],['energi','Energi'],['emoney','E-Money'],['produk','UMKM'],['donasi','Donasi']];
+
+  const LESSONS = [
+    { id:'e1', title:'Kadar Air & Nilai Kalor',
+      body:'Sampah tropis basah (60-70%). Air menyerap energi saat dibakar, nilai kalor turun.',
+      q:'Sampah kadar air 65% cenderung...',
+      opts:['Mudah dijadikan RDF','Nilai kalor turun, kurang ekonomis','Tidak berpengaruh'],
+      ans:1, explain:'Tepat. Karena itu pilah kering di rumah sangat penting.' },
+    { id:'e2', title:'Apa Itu RDF?',
+      body:'Refuse Derived Fuel adalah bahan bakar dari sampah residu kering yang terpilah.',
+      q:'RDF dibuat dari...',
+      opts:['Residu kering terpilah','Sampah basah dapur','Botol PET daur ulang'],
+      ans:0, explain:'Tepat. RDF menyasar kertas, tekstil, plastik bernilai rendah.' },
+    { id:'e3', title:'Dari Cemas ke Aksi',
+      body:'Cemas iklim bisa jadi apatis jika tak diarahkan. Aksi kecil memutus lingkaran itu.',
+      q:'Cara terbaik mengubah cemas jadi aksi?',
+      opts:['Hindari berita lingkungan','Aksi kecil yang hasilnya terlihat','Tunggu pemerintah'],
+      ans:1, explain:'Tepat. Aksi terukur memberi rasa kendali.' }
+  ];
+
+  const BADGES = [
+    { id:'sungai',   icon:'🌊', name:'Penjaga Sungai',  req:'Mulai di level 1',  check:s => levelOf(s.totalXP) >= 1 },
+    { id:'adaptasi', icon:'♻️', name:'Adaptasi Pilah',  req:'1 scan valid',      check:s => s.validScans >= 1 },
+    { id:'pedali',   icon:'🚲', name:'Pedali Sesama',   req:'1 misi selesai',    check:s => s.missionsDone >= 1 },
+    { id:'literat',  icon:'📘', name:'Literat Energi',  req:'3 modul selesai',   check:s => s.lessonsDone.length >= 3 },
+    { id:'heroism',  icon:'🏅', name:'Digital Heroism', req:'1 tukar koin',      check:s => s.redeems >= 1 },
+    { id:'duta',     icon:'📣', name:'Duta Lingkungan', req:'Undang 3 teman',    check:s => s.referrals >= 3 }
+  ];
+
+  const DAILY = [
+    { id:'d1', t:'Pilah sampah kering hari ini' },
+    { id:'d2', t:'Ceritakan RDF ke keluarga' },
+    { id:'d3', t:'Cek kadar air sebelum buang' }
+  ];
+
+  const OTHERS = [
+    { name:'Siti Aminah', xp:5200 },
+    { name:'Budi Santoso', xp:4800 },
+    { name:'Bu RT 05', xp:4100 }
+  ];
+
+  const PENTA = [
+    { t:'Pemerintah', r:'Regulator', d:'Standar RDF dan insentif fiskal sesuai Perpres 109/2025.' },
+    { t:'Akademisi', r:'Inovator', d:'Kembangkan algoritma AI dan riset nilai kalor.' },
+    { t:'Bisnis', r:'Off-taker', d:'Sediakan fasilitas PSEL dan beli RDF warga.' },
+    { t:'Komunitas', r:'Eksekutor', d:'Edukasi warga dan jadi titik kumpul.' },
+    { t:'Media', r:'Amplifikator', d:'Bangun narasi sampah jadi energi.' }
+  ];
+
+  const ROADMAP = [
+    { y:'Tahun 1', t:'Inisiasi & pilot', items:[
+      'Aplikasi beta dan pelatihan AI',
+      'Uji coba di 5 kelurahan',
+      'Target akurasi 85%'] },
+    { y:'Tahun 2', t:'Ekspansi', items:[
+      'Luncur tingkat kota/provinsi',
+      'Integrasi token PLN & UMKM',
+      'Akurasi naik ke 95%'] },
+    { y:'Tahun 3', t:'Nasional', items:[
+      'Replikasi ke kota besar lain',
+      'Model B2B dengan industri',
+      'Target turun sampah 5%'] }
+  ];
+
+  const state = {
+    user:null, view:'auth',
+    balance:1250, totalXP:750, weeklyXP:750,
+    kg:12.0, scans:0, validScans:0, missionsDone:0, redeems:0, referrals:0, coinsIssued:0,
+    lessonsDone:[], unlocked:new Set(), activeMission:null,
+    history:[], daily:{}, moodMsg:'',
+    selectedCat:'kertas', source:'langsung', weight:1.0,
+    scanning:false, scanResult:null,
+    filter:'semua', openPenta:-1, roadYear:0,
+    cam:{ stream:null, active:false, captured:null, error:null }
+  };
+
+  const $  = (s, r=document) => r.querySelector(s);
+  const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+  const fmt = n => Number(n).toLocaleString('id-ID');
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const levelOf = xp => Math.floor(xp / LEVEL_XP) + 1;
+  const levelTitle = l => LEVEL_TITLES[Math.min(l-1, LEVEL_TITLES.length-1)];
+  const progressPct = () => (state.totalXP % LEVEL_XP) / LEVEL_XP * 100;
+  const co2 = () => state.kg * CO2_FACTOR;
+  const kelById = id => KELURAHAN.find(k => k.id === id) || KELURAHAN[0];
+  const now = () => new Date().toLocaleString('id-ID', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'});
+
+  const bottomnav = $('.bottomnav');
+  bottomnav.addEventListener('pointermove', e => {
+    if (e.pointerType === 'touch') return;
+    const bounds = bottomnav.getBoundingClientRect();
+    bottomnav.style.setProperty('--glass-x', (e.clientX - bounds.left) + 'px');
+    bottomnav.style.setProperty('--glass-y', (e.clientY - bounds.top) + 'px');
+    bottomnav.classList.add('is-pointing');
+  });
+  bottomnav.addEventListener('pointerleave', () => bottomnav.classList.remove('is-pointing'));
+
+  function updatePasswordStrength(){
+    const password = $('#reg-password').value;
+    const fill = $('#password-strength-fill');
+    const score = [
+      password.length >= 8,
+      /[a-z]/.test(password) && /[A-Z]/.test(password),
+      /\d/.test(password),
+      /[^A-Za-z0-9]/.test(password)
+    ].filter(Boolean).length;
+    const colors = ['var(--line)', 'var(--lime-l)', 'var(--lime-l)', 'var(--lime-d)', 'var(--royal)'];
+    fill.style.width = (score * 25) + '%';
+    fill.style.backgroundColor = colors[score];
+  }
+  function updatePasswordConfirmation(){
+    const password = $('#reg-password');
+    const confirm = $('#reg-confirm-password');
+    confirm.setCustomValidity(confirm.value && confirm.value !== password.value ? 'Konfirmasi kata sandi tidak sama.' : '');
+  }
+
+  function toast(msg){
+    const t = document.createElement('div');
+    t.className = 't';
+    t.textContent = msg;
+    $('#toast').appendChild(t);
+    setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 350); }, 2200);
+  }
+  function openModal(html){ $('#modal-box').innerHTML = html; $('#modal').classList.add('active'); }
+  function closeModal(){ $('#modal').classList.remove('active'); }
+
+  function pushHistory(label, amt){
+    state.history.unshift({label, amt, date:now()});
+    if (state.history.length > 30) state.history.pop();
+  }
+  function addCoins(n, label){
+    state.balance += n;
+    if (n > 0) state.coinsIssued += n;
+    pushHistory(label, n);
+  }
+  function addXP(n){
+    const before = levelOf(state.totalXP);
+    state.totalXP += n;
+    state.weeklyXP += n;
+    const after = levelOf(state.totalXP);
+    if (after > before) toast('Naik Level ' + after + ': ' + levelTitle(after));
+    checkBadges();
+  }
+  function checkBadges(){
+    BADGES.forEach(b => {
+      if (!state.unlocked.has(b.id) && b.check(state)) {
+        state.unlocked.add(b.id);
+        toast('Lencana: ' + b.name);
+      }
+    });
+  }
+
+  const splashStartedAt = performance.now();
+  let splashFinishTimer = null;
+  requestAnimationFrame(() => $('#splash').classList.add('ready'));
+  setTimeout(finishSplash, 6800);
+  $('#splash').addEventListener('click', finishSplash);
+
+  function finishSplash(){
+    const s = $('#splash');
+    if (!s || s.classList.contains('hide')) return;
+    const wait = Math.max(0, 4400 - (performance.now() - splashStartedAt));
+    if (wait > 0){
+      if (!splashFinishTimer) splashFinishTimer = setTimeout(() => {
+        splashFinishTimer = null;
+        finishSplash();
+      }, wait);
+      return;
+    }
+    s.classList.add('hide');
+  }
+
+  const renderers = {
+    home:renderHome, lokasi:renderLokasi, scan:renderScan, market:renderMarket,
+    profil:renderProfil, edu:renderEdu, tentang:renderTentang
+  };
+
+  function go(view, scrollId){
+    closeModal();
+    if (view !== 'auth' && !state.user) view = 'auth';
+    if (state.view === 'scan' && view !== 'scan') stopCamera();
+    state.view = view;
+    $$('.view').forEach(v => v.classList.toggle('hidden', v.id !== 'view-' + view));
+    document.body.classList.toggle('is-auth', view === 'auth');
+    if (renderers[view]) renderers[view]();
+    $$('.nav-btn').forEach(b => b.classList.toggle('on', b.dataset.go === view));
+    renderTop();
+    if (scrollId){
+      const el = document.getElementById(scrollId);
+      if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
+    } else {
+      window.scrollTo(0, 0);
+    }
+  }
+  function renderTop(){ $('#topBal').innerHTML = coinIcon(16) + ' ' + fmt(state.balance); }
+
+  function setAuthTab(tab){
+    $('#form-login').classList.toggle('hidden', tab !== 'login');
+    $('#form-register').classList.toggle('hidden', tab !== 'register');
+    $$('[data-action="auth-tab"]').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  }
+  function togglePassword(button){
+    const input = document.getElementById(button.dataset.target);
+    if (!input) return;
+    const showPassword = input.type === 'password';
+    input.type = showPassword ? 'text' : 'password';
+    button.textContent = showPassword ? 'Sembunyi' : 'Lihat';
+    button.setAttribute('aria-label', showPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi');
+  }
+  function login(u){
+    state.user = u;
+    checkBadges();
+    go('home');
+    toast('Halo, ' + u.name + '!');
+  }
+  function logout(){
+    state.user = null;
+    go('auth');
+    toast('Sampai jumpa lagi!');
+  }
+
+  function renderHome(){
+    const u = state.user;
+    const lvl = levelOf(state.totalXP);
+    const kel = kelById(u.kel);
+    const mission = state.activeMission ? MISSIONS.find(m => m.id === state.activeMission) : null;
+    const doneDaily = DAILY.filter(d => state.daily[d.id]).length;
+
+    $('#view-home').innerHTML = `
+      <div class="hero">
+        <svg class="home-hero-mark eco-mark" viewBox="0 0 120 120" aria-hidden="true">
+          <circle cx="60" cy="60" r="55" class="badge"/>
+          <path d="M83 25 A42 42 0 0 0 28 39" class="orbit"/>
+          <path d="M37 96 A42 42 0 0 0 92 81" class="orbit second"/>
+          <path d="M23 34 L29 46 L37 35 Z" class="arrow"/>
+          <path d="M97 86 L91 74 L83 85 Z" class="arrow second"/>
+          <circle cx="60" cy="60" r="23" class="coin"/>
+          <circle cx="60" cy="60" r="18" class="coin-ring"/>
+          <path d="M58 72 C49 67 49 57 54 52 C59 47 67 49 70 54 C71 62 67 69 58 72 Z" class="leaf"/>
+          <path d="M53 65 C59 60 63 56 68 51" class="vein"/>
+        </svg>
+        <div class="hero-top">
+          <div>
+            <span class="hint">Halo,</span>
+            <h2>${esc(u.name)}</h2>
+            <span class="hint">${esc(kel.name)}</span>
+          </div>
+          <div class="lvl">Lv ${lvl}</div>
+        </div>
+        <div class="balance"><span>Green Coin</span></div>
+        <div class="balance"><strong>${coinIcon(24)} ${fmt(state.balance)}</strong></div>
+        <div class="xp"><div class="xp-bar" style="width:${progressPct()}%"></div></div>
+        <span class="hint">${levelTitle(lvl)} &middot; ${fmt(state.totalXP % LEVEL_XP)}/${fmt(LEVEL_XP)} XP</span>
+      </div>
+
+      <div class="quick">
+        <button data-action="go" data-go="scan">${icon('camera')}<span>Scan</span></button>
+        <button data-action="go" data-go="lokasi">${icon('map')}<span>Lokasi</span></button>
+        <button data-action="go" data-go="market">${icon('gift')}<span>Tukar</span></button>
+        <button data-action="go" data-go="lokasi" data-scroll="rank">&#127942;<span>Rank</span></button>
+      </div>
+
+      <div class="stats3">
+        <button class="stat" data-action="tbl" data-k="planet"><b>${state.kg.toFixed(1)}</b><span>kg sampah</span></button>
+        <button class="stat" data-action="tbl" data-k="planet"><b>${co2().toFixed(1)}</b><span>CO2 hemat*</span></button>
+        <button class="stat" data-action="go" data-go="profil"><b>${state.missionsDone}</b><span>misi</span></button>
+      </div>
+
+      <div class="home-focus">
+        <div class="home-focus-copy">
+          <small>Target hari ini</small>
+          <b>${doneDaily}/${DAILY.length} aksi selesai</b>
+          <p>Satu aksi kecil bantu kurangi sampah.</p>
+        </div>
+        <button class="btn" data-action="go" data-go="home" data-scroll="daily-actions">Lanjutkan</button>
+      </div>
+
+      <div class="home-grid">
+        <div class="home-column">
+          <div class="card">
+            <h3>Misi aktif</h3>
+            ${mission ? missionCard(mission) : `
+              <span class="hint">Belum ada misi. Pilih di Lokasi.</span>
+              <button class="btn btn-ghost" data-action="go" data-go="lokasi">Buka Lokasi</button>`}
+          </div>
+
+          <div class="card" id="daily-actions">
+            <h3>Aksi harian <span class="hint" style="display:inline">(${doneDaily}/${DAILY.length})</span></h3>
+            ${DAILY.map(d => `
+              <button class="check ${state.daily[d.id] ? 'done' : ''}" data-action="daily" data-id="${d.id}">
+                <span>${state.daily[d.id] ? '&#10003;' : ''}</span>${d.t}
+              </button>`).join('')}
+          </div>
+        </div>
+
+        <div class="home-column">
+          <div class="card">
+            <h3>Perasaanmu hari ini?</h3>
+            <div class="moods">
+              <button data-action="mood" data-mood="cemas">😟 Cemas</button>
+              <button data-action="mood" data-mood="netral">😐 Netral</button>
+              <button data-action="mood" data-mood="termotivasi">💪 Semangat</button>
+            </div>
+            <p class="mood-msg">${esc(state.moodMsg)}</p>
+          </div>
+
+          <div class="card">
+            <h3>Modul edukasi</h3>
+            <span class="hint">${state.lessonsDone.length}/${LESSONS.length} selesai</span>
+            <button class="btn btn-ghost" data-action="go" data-go="edu">Buka modul</button>
+          </div>
+
+          <div class="card">
+            <h3>Tentang EcoLoop</h3>
+            <button class="btn btn-primary" data-action="go" data-go="tentang">Lihat selengkapnya</button>
+          </div>
+        </div>
+      </div>
+
+      <p class="footer-note">*Angka simulasi untuk prototipe.</p>`;
+  }
+
+  function missionCard(m){
+    const k = kelById(m.kel);
+    return `
+      <div class="mission-card">
+        <b>${esc(m.title)}</b>
+        <p>${esc(k.name)} &middot; +${m.xp} XP &middot; min ${m.minKg} kg</p>
+        <div class="row-btns">
+          <button class="btn btn-primary" data-action="go" data-go="scan">Scan</button>
+          <button class="btn btn-ghost" data-action="cancel-mission">Batal</button>
+        </div>
+      </div>`;
+  }
+
+  function setMood(m){
+    const msgs = {
+      cemas:'Wajar. Ubah jadi satu aksi: pilah satu jenis sampah hari ini.',
+      netral:'Mulai kecil. Pilih misi di Lokasi, lalu scan hasilnya.',
+      termotivasi:'Mantap! Ajak teman jadi Duta Lingkungan di Profil.'
+    };
+    if (!state.moodMsg) addXP(20);
+    state.moodMsg = msgs[m];
+    renderHome();
+  }
+  function toggleDaily(id){
+    if (state.daily[id]) { toast('Sudah tercatat hari ini.'); return; }
+    state.daily[id] = true;
+    addXP(15);
+    toast('+15 XP');
+    renderHome();
+  }
+
+  function renderLokasi(){
+    $('#view-lokasi').innerHTML = `
+      <div class="page-head">
+        <h2>Lokasi Misi</h2>
+        <span class="hint">Kondisi lingkungan per kelurahan.</span>
+      </div>
+      <div class="kel-grid">
+        ${KELURAHAN.map(k => `
+          <button class="kel" data-action="open-kel" data-id="${k.id}">
+            <b>${esc(k.name)}</b>
+            <div class="meter"><span style="width:${k.health}%"></span></div>
+            <small>${k.health}% &middot; RDF ${k.potensi}</small>
+          </button>`).join('')}
+      </div>
+      <div class="card" id="rank">
+        <h3>Peringkat mingguan</h3>
+        ${leaderboardHTML()}
+      </div>`;
+  }
+  function leaderboardHTML(){
+    const rows = [...OTHERS.map(o => ({name:o.name, xp:o.xp, me:false})),
+                  {name:state.user.name, xp:state.weeklyXP, me:true}]
+      .sort((a,b) => b.xp - a.xp);
+    return rows.map((r,i) => `
+      <div class="rank-row ${i===0?'gold':''} ${r.me?'me':''}">
+        <span class="no">${i+1}</span>
+        <span class="name">${esc(r.name)}</span>
+        <span class="xpv">${fmt(r.xp)} XP</span>
+      </div>`).join('');
+  }
+  function openKel(id){
+    const k = kelById(id);
+    const missions = MISSIONS.filter(m => m.kel === id);
+    openModal(`
+      <span class="tag">Kelurahan</span>
+      <h3>${esc(k.name)}</h3>
+      <p class="hint">${k.health}% &middot; RDF ${k.potensi}</p>
+      ${missions.length ? missions.map(m => `
+        <div class="mission-item">
+          <b>${esc(m.title)}</b>
+          <p class="hint">${esc(m.desc)}</p>
+          <small>+${m.xp} XP</small>
+          <button class="btn btn-primary" data-action="accept-mission" data-id="${m.id}">Ambil misi</button>
+        </div>`).join('') : `
+        <span class="hint">Belum ada misi. Bisa scan mandiri.</span>
+        <button class="btn btn-ghost" data-action="go" data-go="scan">Buka Scan</button>`}
+      <button class="btn btn-ghost" data-action="set-kel" data-id="${id}">Jadikan kelurahan saya</button>
+      <button class="btn btn-ghost" data-action="close">Tutup</button>`);
+  }
+  function acceptMission(id){
+    const m = MISSIONS.find(x => x.id === id);
+    state.activeMission = m.id;
+    toast('Misi diambil');
+    go('home');
+  }
+  function setKel(id){
+    state.user.kel = id;
+    toast('Kelurahan diperbarui');
+    go('lokasi');
+  }
+
+  function secureContextOK(){
+    return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  }
+  function setCameraPreview(open){
+    const modal = $('#camera-modal');
+    modal.classList.toggle('active', open);
+    modal.setAttribute('aria-hidden', String(!open));
+    if (open && state.cam.stream){
+      const video = $('#camera-modal-video');
+      video.addEventListener('loadedmetadata', fitCameraFrame, { once:true });
+      if (video.srcObject !== state.cam.stream) video.srcObject = state.cam.stream;
+      video.play().catch(()=>{});
+      fitCameraFrame();
+    }
+  }
+  function fitCameraFrame(){
+    const video = $('#camera-modal-video');
+    const frame = video.closest('.camera-live-frame');
+    if (!video.videoWidth || !video.videoHeight || !frame.parentElement.clientWidth) return;
+    const scale = Math.min(
+      frame.parentElement.clientWidth / video.videoWidth,
+      Math.min(window.innerHeight * 0.72, 740) / video.videoHeight
+    );
+    frame.style.width = Math.floor(video.videoWidth * scale) + 'px';
+    frame.style.height = Math.floor(video.videoHeight * scale) + 'px';
+  }
+  async function startCamera(){
+    if (state.cam.active){
+      setCameraPreview(true);
+      return;
+    }
+    if (!secureContextOK()){
+      state.cam.error = 'secure';
+      renderScan();
+      return;
+    }
+    try{
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video:{ facingMode:{ ideal:'environment' } },
+        audio:false
+      });
+      state.cam.stream = stream;
+      state.cam.active = true;
+      state.cam.error = null;
+      renderScan();
+      setCameraPreview(true);
+    }catch(err){
+      state.cam.error = err && err.name === 'NotAllowedError' ? 'denied' : 'failed';
+      state.cam.active = false;
+      setCameraPreview(false);
+      renderScan();
+    }
+  }
+  function stopCamera(){
+    if (state.cam.stream){
+      state.cam.stream.getTracks().forEach(t => t.stop());
+    }
+    state.cam.stream = null;
+    state.cam.active = false;
+    const video = $('#camera-modal-video');
+    video.pause();
+    video.srcObject = null;
+    setCameraPreview(false);
+  }
+  function capturePhoto(){
+    const v = $('#camera-modal-video');
+    if (!v || !v.videoWidth) { toast('Kamera belum siap.'); return; }
+    const canvas = $('#cam-canvas');
+    canvas.width = v.videoWidth;
+    canvas.height = v.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(v, 0, 0, canvas.width, canvas.height);
+    state.cam.captured = canvas.toDataURL('image/jpeg', 0.85);
+    stopCamera();
+    renderScan();
+    toast('Foto diambil');
+  }
+  function retakePhoto(){
+    state.cam.captured = null;
+    startCamera();
+  }
+
+  function renderScan(){
+    const c = CATS[state.selectedCat];
+    const r = state.scanResult;
+    const cam = state.cam;
+
+    let vfInner = '';
+    if (cam.captured){
+      vfInner = cam.captured === 'placeholder' ? `<div class="vf-icon">${c.icon}</div>` : `<img class="shot" src="${cam.captured}" alt=""/>`;
+    } else if (cam.active){
+      vfInner = `<div class="camera-preview-hint">Kamera aktif. Buka tampilan luas untuk melihat dan memotret sampah.</div>`;
+    } else {
+      vfInner = `<div class="vf-icon">${c.icon}</div>`;
+    }
+
+    let vfStatus = '';
+    if (state.scanning) vfStatus = '';
+    else if (cam.error === 'secure') vfStatus = 'Perlu https / server lokal';
+    else if (cam.error === 'denied') vfStatus = 'Izin kamera ditolak';
+    else if (cam.error === 'failed') vfStatus = 'Kamera tidak ditemukan';
+    else if (!cam.active && !cam.captured) vfStatus = 'Arahkan ke sampah';
+
+    let camControls = '';
+    if (state.source === 'langsung'){
+      if (cam.captured){
+        camControls = `<div class="cam-row">
+            <button class="btn btn-ghost" data-action="retake-photo">Ambil Ulang</button>
+            <button class="btn btn-primary" data-action="analyze">Analisis AI</button>
+          </div>`;
+      } else if (cam.active){
+        camControls = `<div class="cam-row">
+            <button class="btn btn-ghost" data-action="stop-cam">Matikan</button>
+            <button class="btn btn-primary" data-action="open-camera">Buka Kamera</button>
+          </div>`;
+      } else {
+        camControls = `<button class="btn btn-primary" data-action="start-cam">Aktifkan Kamera</button>`;
+        if (cam.error === 'secure'){
+          camControls += `<p class="cam-note">Kamera butuh https:// atau server lokal, bukan file lokal. Unggah ke hosting agar aktif.</p>
+            <button class="btn btn-ghost" data-action="skip-cam">Lanjut tanpa kamera</button>`;
+        } else if (cam.error === 'denied'){
+          camControls += `<p class="cam-note">Izinkan kamera lewat pengaturan browser, lalu coba lagi.</p>`;
+        } else if (cam.error === 'failed'){
+          camControls += `<p class="cam-note">Kamera tidak tersedia di perangkat ini.</p>
+            <button class="btn btn-ghost" data-action="skip-cam">Lanjut tanpa kamera</button>`;
+        }
+      }
+    }
+
+    $('#view-scan').innerHTML = `
+      <div class="page-head">
+        <h2>Scan Sampah</h2>
+        <span class="hint">Pilah, scan, AI cek kelayakan RDF.</span>
+      </div>
+
+      <div class="viewfinder ${state.scanning ? 'scanning' : ''}">
+        ${vfInner}
+        <div class="vf-corners"></div>
+        <div class="scan-line"></div>
+        <div class="vf-status" id="scan-status">${vfStatus}</div>
+      </div>
+
+      ${camControls}
+
+      <p class="label">1. Jenis sampah</p>
+      <div class="chips">
+        ${Object.entries(CATS).map(([k,v]) => `
+          <button class="chip ${state.selectedCat===k?'on':''}" data-action="cat" data-cat="${k}">${v.icon} ${v.label}</button>`).join('')}
+      </div>
+
+      <p class="label">2. Sumber foto</p>
+      <div class="seg">
+        <button class="${state.source==='langsung'?'on':''}" data-action="source" data-src="langsung">Kamera</button>
+        <button class="${state.source==='internet'?'on':''}" data-action="source" data-src="internet">Internet</button>
+      </div>
+
+      <p class="label">3. Berat: <b id="w-val">${state.weight.toFixed(1)}</b> kg</p>
+      <input type="range" id="weight" class="slider" min="0.5" max="5" step="0.5" value="${state.weight}"/>
+
+      ${state.source === 'internet' ? `<button class="btn btn-primary" data-action="analyze">Analisis AI</button>` : ''}
+      ${r ? resultHTML(r) : ''}`;
+
+  }
+
+  function evaluate(){
+    const c = CATS[state.selectedCat];
+    const w = state.weight;
+    const [lo,hi] = c.moist;
+    const moist = Math.round(lo + Math.random() * (hi - lo));
+
+    if (state.source === 'internet'){
+      return { ok:false, title:'Foto Ditolak', xp:0, cat:c,
+        reason:'Foto dari internet tidak diterima. Scan langsung sampahmu.' };
+    }
+    if (!c.rdf){
+      return { ok:false, title:'Bukan Target RDF', moist, xp:10, cat:c, reason:c.note };
+    }
+    if (moist > 30){
+      return { ok:false, title:'Kadar Air Tinggi', moist, xp:10, cat:c,
+        reason:'Kadar air ' + moist + '% melebihi batas RDF (maks 30%).' };
+    }
+    const grade = moist <= 15 ? 'A' : 'B';
+    const rate  = grade === 'A' ? 12 : 7;
+    const coins = Math.round(w * rate);
+    const kcal  = Math.round(4800 - moist * 40);
+    return { ok:true, grade, rate, coins, xp:20 + coins*2, moist, kcal, cat:c, weight:w };
+  }
+
+  function resultHTML(r){
+    if (!r.ok){
+      return `
+        <div class="result bad">
+          <h3>${esc(r.title)}</h3>
+          <p>${esc(r.reason)}</p>
+          ${r.moist !== undefined ? `<span class="hint">Kadar air: ${r.moist}%</span>` : ''}
+          ${r.xp ? `<span class="hint">+${r.xp} XP partisipasi</span>` : ''}
+          <div class="row-btns">
+            <button class="btn btn-ghost" data-action="scan-again">Coba lagi</button>
+            <button class="btn btn-ghost" data-action="go" data-go="edu">Pelajari RDF</button>
+          </div>
+        </div>`;
+    }
+    return `
+      <div class="result ok">
+        <h3>Layak Jadi RDF</h3>
+        <div class="res-grid">
+          <div><small>Kadar air</small><b>${r.moist}%</b></div>
+          <div><small>Grade</small><b>${r.grade}</b></div>
+          <div><small>Nilai kalor*</small><b>${fmt(r.kcal)} kkal/kg</b></div>
+          <div><small>Green Coin</small><b>${coinIcon(14)} +${r.coins}</b></div>
+        </div>
+        <p class="formula">Koin = berat &times; tarif grade. Nilai akhir menyesuaikan biaya operasional.</p>
+        ${r.mission ? `<p class="mission-done">Misi selesai! +${r.mission.xp} XP</p>` : ''}
+        <div class="row-btns">
+          <button class="btn btn-ghost" data-action="scan-again">Scan lagi</button>
+          <button class="btn btn-primary" data-action="go" data-go="market">Tukar poin</button>
+        </div>
+        <span class="hint">*Estimasi simulasi.</span>
+      </div>`;
+  }
+
+  function analyze(){
+    if (state.scanning) return;
+    if (state.source === 'langsung' && !state.cam.captured){
+      toast('Ambil foto dulu.');
+      return;
+    }
+    state.scanning = true;
+    state.scanResult = null;
+    renderScan();
+    const steps = ['Mendeteksi objek...', 'Mengestimasi kadar air...', 'Verifikasi foto...', 'Klasifikasi RDF...', 'Hitung Green Coin...'];
+    let i = 0;
+    const tick = () => {
+      const s = $('#scan-status');
+      if (s) s.textContent = steps[i];
+      i++;
+      setTimeout(i < steps.length ? tick : finishScan, 600);
+    };
+    tick();
+  }
+
+  function finishScan(){
+    state.scanning = false;
+    const r = evaluate();
+    state.scans++;
+
+    if (r.ok){
+      state.validScans++;
+      state.kg += r.weight;
+      addCoins(r.coins, 'Scan ' + r.cat.label);
+      addXP(r.xp);
+      const m = state.activeMission ? MISSIONS.find(x => x.id === state.activeMission) : null;
+      if (m && m.target === state.selectedCat && r.weight >= m.minKg){
+        state.missionsDone++;
+        state.activeMission = null;
+        r.mission = m;
+        addXP(m.xp);
+        toast('Misi selesai');
+      }
+      toast('+' + r.coins + ' Green Coin');
+    } else if (r.xp){
+      addXP(r.xp);
+    }
+    state.scanResult = r;
+    state.cam.captured = null;
+    checkBadges();
+    renderScan();
+    renderTop();
+  }
+
+  function renderMarket(){
+    const f = state.filter;
+    const list = ITEMS.filter(i => f === 'semua' || i.cat === f);
+    $('#view-market').innerHTML = `
+      <div class="page-head"><h2>Market</h2><span class="hint">Tukar poin jadi manfaat.</span></div>
+      <div class="balance-mini"><span>Saldo</span><b>${coinIcon(18)} ${fmt(state.balance)}</b></div>
+      <div class="chips">
+        ${FILTERS.map(([k,l]) => `<button class="chip ${f===k?'on':''}" data-action="filter" data-filter="${k}">${l}</button>`).join('')}
+      </div>
+      <div class="items">
+        ${list.map(i => `
+          <button class="item" data-action="redeem" data-id="${i.id}">
+            <span class="ic-wrap">${ITEM_EMOJI[i.ic]}</span>
+            <b>${esc(i.name)}</b>
+            <small>${esc(i.desc)}</small>
+            <em>${coinIcon(14)} ${fmt(i.cost)}</em>
+          </button>`).join('')}
+      </div>
+      <button class="btn btn-ghost" data-action="history">Riwayat</button>`;
+  }
+  function confirmRedeem(id){
+    const item = ITEMS.find(i => i.id === id);
+    if (state.balance < item.cost){
+      openModal(`
+        <h3>Saldo kurang</h3>
+        <p>Butuh ${fmt(item.cost - state.balance)} koin lagi untuk <b>${esc(item.name)}</b>.</p>
+        <button class="btn btn-primary" data-action="go" data-go="scan">Scan sekarang</button>
+        <button class="btn btn-ghost" data-action="close">Tutup</button>`);
+      return;
+    }
+    openModal(`
+      <h3>Konfirmasi</h3>
+      <p><b>${esc(item.name)}</b> &middot; ${fmt(item.cost)} koin</p>
+      <p class="hint">Sisa saldo: ${fmt(state.balance - item.cost)} koin</p>
+      <button class="btn btn-primary" data-action="confirm-redeem" data-id="${item.id}">Ya, tukar</button>
+      <button class="btn btn-ghost" data-action="close">Batal</button>`);
+  }
+  function doRedeem(id){
+    const item = ITEMS.find(i => i.id === id);
+    if (state.balance < item.cost){ confirmRedeem(id); return; }
+    state.balance -= item.cost;
+    state.redeems++;
+    pushHistory('Tukar: ' + item.name, -item.cost);
+    checkBadges();
+    openModal(`
+      <h3>Berhasil</h3>
+      <p>${esc(item.name)} didapat. Saldo berkurang ${fmt(item.cost)}.</p>
+      <button class="btn btn-primary" data-action="close">Oke</button>`);
+    renderMarket();
+    renderTop();
+  }
+  function openHistory(){
+    const rows = state.history.length
+      ? state.history.slice(0,12).map(h => `
+          <div class="hist">
+            <div>${esc(h.label)}<small>${h.date}</small></div>
+            <span class="amt ${h.amt>=0?'in':'out'}">${h.amt>=0?'+':''}${fmt(h.amt)}</span>
+          </div>`).join('')
+      : '<span class="hint">Belum ada transaksi.</span>';
+    openModal(`<h3>Riwayat</h3>${rows}<button class="btn btn-ghost" data-action="close">Tutup</button>`);
+  }
+
+  function renderEdu(){
+    $('#view-edu').innerHTML = `
+      <div class="page-head">
+        <h2>Modul Edukasi</h2>
+        <span class="hint">+30 XP tiap modul.</span>
+      </div>
+      ${LESSONS.map((l,i) => {
+        const done = state.lessonsDone.includes(l.id);
+        return `
+          <button class="lesson ${done?'done':''}" data-action="lesson" data-id="${l.id}">
+            <span class="num">${i+1}</span>
+            <div><b>${esc(l.title)}</b><small>${esc(l.body.slice(0,55))}...</small></div>
+            ${done ? '<span class="done-tag">Selesai</span>' : ''}
+          </button>`;
+      }).join('')}`;
+  }
+  function openLesson(id){
+    const l = LESSONS.find(x => x.id === id);
+    openModal(`
+      <span class="tag">Modul</span>
+      <h3>${esc(l.title)}</h3>
+      <p class="hint">${esc(l.body)}</p>
+      <p class="q"><b>${esc(l.q)}</b></p>
+      <div class="opts">
+        ${l.opts.map((o,i) => `<button class="opt" data-action="answer" data-id="${l.id}" data-idx="${i}">${esc(o)}</button>`).join('')}
+      </div>
+      <button class="btn btn-ghost" data-action="close">Nanti</button>`);
+  }
+  function answerLesson(id, idx){
+    const l = LESSONS.find(x => x.id === id);
+    if (idx !== l.ans){
+      openModal(`
+        <h3>Belum tepat</h3>
+        <p>Baca lagi materinya.</p>
+        <button class="btn btn-primary" data-action="lesson" data-id="${l.id}">Coba lagi</button>
+        <button class="btn btn-ghost" data-action="close">Tutup</button>`);
+      return;
+    }
+    const first = !state.lessonsDone.includes(id);
+    if (first){ state.lessonsDone.push(id); addXP(30); }
+    const next = LESSONS[LESSONS.indexOf(l) + 1];
+    openModal(`
+      <h3>Tepat!</h3>
+      <p>${esc(l.explain)}</p>
+      ${first ? '<p class="mission-done">+30 XP</p>' : ''}
+      <div class="row-btns">
+        ${next
+          ? `<button class="btn btn-primary" data-action="lesson" data-id="${next.id}">Lanjut</button>`
+          : `<button class="btn btn-primary" data-action="go" data-go="edu">Kembali</button>`}
+        <button class="btn btn-ghost" data-action="close">Tutup</button>
+      </div>`);
+    if (state.view === 'edu') renderEdu();
+  }
+
+  function renderProfil(){
+    const u = state.user;
+    const lvl = levelOf(state.totalXP);
+    const avatarStyle = u.photo ? 'style="background-image:url(' + u.photo + ')"' : '';
+    const badges = BADGES.map(b => {
+      const on = state.unlocked.has(b.id);
+      return `<button class="badge ${on?'on':''}" data-action="badge" data-id="${b.id}">
+                <span>${on ? b.icon : '&#128274;'}</span><small>${esc(b.name)}</small></button>`;
+    }).join('');
+    const hist = state.history.length
+      ? state.history.slice(0,5).map(h => `
+          <div class="hist">
+            <div>${esc(h.label)}<small>${h.date}</small></div>
+            <span class="amt ${h.amt>=0?'in':'out'}">${h.amt>=0?'+':''}${fmt(h.amt)}</span>
+          </div>`).join('')
+      : '<span class="hint">Belum ada aktivitas.</span>';
+
+    $('#view-profil').innerHTML = `
+      <div class="card profile">
+        <div class="avatar-wrap">
+          <button class="avatar" id="avatar-btn" ${avatarStyle} data-action="pick-avatar">${u.photo ? '' : esc(u.name.charAt(0).toUpperCase())}</button>
+          <span class="avatar-edit" data-action="pick-avatar">${icon('edit')}</span>
+        </div>
+        <h2>${esc(u.name)}</h2>
+        <span class="hint">${esc(kelById(u.kel).name)}</span><br/>
+        <span class="lvl-line">Lv ${lvl} &middot; ${fmt(state.totalXP)} XP</span>
+      </div>
+      <div class="stats3">
+        <button class="stat" data-action="tbl" data-k="planet"><b>${state.kg.toFixed(1)}</b><span>kg sampah</span></button>
+        <button class="stat" data-action="tbl" data-k="profit"><b>${fmt(state.balance)}</b><span>saldo</span></button>
+        <button class="stat" data-action="tbl" data-k="people"><b>${state.scans}</b><span>scan</span></button>
+      </div>
+      <div class="card"><h3>Lencana</h3><div class="badges">${badges}</div></div>
+      <div class="card"><h3>Riwayat</h3>${hist}</div>
+      <div class="stack">
+        <button class="btn btn-primary" data-action="invite">Undang teman</button>
+        <button class="btn btn-ghost" data-action="go" data-go="edu">Modul edukasi</button>
+        <button class="btn btn-ghost" data-action="go" data-go="tentang">Tentang EcoLoop</button>
+        <button class="btn btn-danger" data-action="logout">Keluar</button>
+      </div>`;
+  }
+  function showBadge(id){
+    const b = BADGES.find(x => x.id === id);
+    toast(state.unlocked.has(id) ? b.name + ' dimiliki' : 'Terkunci: ' + b.req);
+  }
+  function invite(){
+    state.referrals++;
+    addXP(25);
+    toast('Teman diundang: ' + state.referrals + '/3');
+    renderProfil();
+  }
+  function pickAvatar(){ $('#avatar-input').click(); }
+  function onAvatarChosen(e){
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      state.user.photo = reader.result;
+      renderProfil();
+      toast('Foto diperbarui');
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  }
+
+  function renderTentang(){
+    $('#view-tentang').innerHTML = `
+      <div class="page-head">
+        <h2>Tentang EcoLoop</h2>
+        <span class="hint">Sampah residu jadi energi.</span>
+      </div>
+      <div class="card">
+        <h3>Masalah</h3>
+        <div class="problem-grid">
+          <div><b>34,2 jt ton</b><span>sampah/tahun (SIPSN 2024)</span></div>
+          <div><b>40,1%</b><span>belum terkelola (ESDM 2025)</span></div>
+          <div><b>60-70%</b><span>kadar air sampah tropis</span></div>
+          <div><b>15,75%</b><span>bauran EBT awal 2025</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Cara kerja</h3>
+        <div class="flow">
+          <div><em>1</em>Login & edukasi</div>
+          <div><em>2</em>Pilih misi</div>
+          <div><em>3</em>Pilah & scan</div>
+          <div><em>4</em>AI validasi</div>
+          <div><em>5</em>Hitung koin</div>
+          <div><em>6</em>Tukar poin</div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Pentahelix</h3>
+        <div class="penta">
+          ${PENTA.map((p,i) => `
+            <button class="${state.openPenta===i?'open':''}" data-action="penta" data-idx="${i}">
+              <b>${p.t}</b><small>${p.r}</small>
+              ${state.openPenta===i ? `<p>${p.d}</p>` : ''}
+            </button>`).join('')}
+        </div>
+      </div>
+      <div class="card">
+        <h3>Roadmap</h3>
+        <div class="road-tabs">
+          ${ROADMAP.map((r,i) => `<button class="${state.roadYear===i?'on':''}" data-action="roadmap" data-idx="${i}">${r.y}</button>`).join('')}
+        </div>
+        <div class="road-body">
+          <b>${ROADMAP[state.roadYear].t}</b>
+          <ul>${ROADMAP[state.roadYear].items.map(x => `<li>${x}</li>`).join('')}</ul>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Triple Bottom Line</h3>
+        <div class="tbl-grid">
+          <button data-action="tbl" data-k="people"><b>People</b></button>
+          <button data-action="tbl" data-k="planet"><b>Planet</b></button>
+          <button data-action="tbl" data-k="profit"><b>Profit</b></button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="team-heading">
+          <h3>Kenali Tim EcoLoop</h3>
+          <span>IPB University</span>
+        </div>
+        <div class="team-members" aria-label="Anggota tim EcoLoop">
+          <article class="team-member">
+            <figure class="team-photo">
+              <img src="assets/team-dzikra.png" alt="Potret lengkap Arifatu Dzikra" loading="lazy"/>
+            </figure>
+            <div class="team-member-info">
+              <span class="team-member-index">Ketua</span>
+              <strong class="team-member-name">Arifatu Dzikra</strong>
+              <span class="team-member-id">M0401241003</span>
+              <span class="team-member-school">Tim EcoLoop</span>
+            </div>
+          </article>
+          <article class="team-member">
+            <figure class="team-photo">
+              <img src="assets/team-nabila.png" alt="Potret lengkap Syarifah Nabila Jusman" loading="lazy"/>
+            </figure>
+            <div class="team-member-info">
+              <span class="team-member-index">Anggota</span>
+              <strong class="team-member-name">Syarifah Nabila Jusman</strong>
+              <span class="team-member-id">M0401241038</span>
+              <span class="team-member-school">Tim EcoLoop</span>
+            </div>
+          </article>
+        </div>
+      </div>
+      <p class="footer-note">Lomba Essay YES-C 2026</p>`;
+  }
+  function showTBL(k){
+    const data = {
+      people:{ t:'People', rows:[
+        ['Scan dilakukan', state.scans],
+        ['Modul selesai', state.lessonsDone.length + '/' + LESSONS.length],
+        ['Lencana', state.unlocked.size + '/' + BADGES.length]] },
+      planet:{ t:'Planet', rows:[
+        ['Sampah dialihkan', state.kg.toFixed(1) + ' kg'],
+        ['CO2 hemat (simulasi)', co2().toFixed(1) + ' kg']] },
+      profit:{ t:'Profit', rows:[
+        ['Green Coin terbit', fmt(state.coinsIssued)],
+        ['Transaksi tukar', state.redeems]] }
+    }[k];
+    openModal(`
+      <span class="tag">Triple Bottom Line</span>
+      <h3>${data.t}</h3>
+      ${data.rows.map(([a,b]) => `<div class="kv"><span>${a}</span><b>${b}</b></div>`).join('')}
+      <button class="btn btn-ghost" data-action="close">Tutup</button>`);
+  }
+
+  document.addEventListener('click', e => {
+    const el = e.target.closest('[data-action]');
+    if (!el) return;
+    const d = el.dataset;
+    switch (d.action){
+      case 'go':            go(d.go, d.scroll); break;
+      case 'auth-tab':      setAuthTab(d.tab); break;
+      case 'toggle-password': togglePassword(el); break;
+      case 'demo':          login({name:'Adaptor Demo', group:'Mahasiswa', kel:'mekarsari', photo:null}); break;
+      case 'logout':        logout(); break;
+      case 'mood':          setMood(d.mood); break;
+      case 'daily':         toggleDaily(d.id); break;
+      case 'accept-mission':acceptMission(d.id); break;
+      case 'cancel-mission':state.activeMission = null; toast('Misi dibatalkan'); renderHome(); break;
+      case 'open-kel':      openKel(d.id); break;
+      case 'set-kel':       setKel(d.id); break;
+      case 'cat':           state.selectedCat = d.cat; state.scanResult = null; renderScan(); break;
+      case 'source':
+        state.source = d.src; state.scanResult = null;
+        if (d.src === 'internet') stopCamera();
+        renderScan();
+        break;
+      case 'start-cam':     startCamera(); break;
+      case 'stop-cam':      stopCamera(); renderScan(); break;
+      case 'open-camera':   setCameraPreview(true); break;
+      case 'camera-minimize': setCameraPreview(false); break;
+      case 'capture-photo': capturePhoto(); break;
+      case 'retake-photo':  retakePhoto(); break;
+      case 'skip-cam':      state.cam.captured = 'placeholder'; renderScan(); break;
+      case 'analyze':       analyze(); break;
+      case 'scan-again':    state.scanResult = null; state.cam.captured = null; renderScan(); break;
+      case 'filter':        state.filter = d.filter; renderMarket(); break;
+      case 'redeem':        confirmRedeem(d.id); break;
+      case 'confirm-redeem':doRedeem(d.id); break;
+      case 'history':       openHistory(); break;
+      case 'lesson':        openLesson(d.id); break;
+      case 'answer':        answerLesson(d.id, Number(d.idx)); break;
+      case 'badge':         showBadge(d.id); break;
+      case 'invite':        invite(); break;
+      case 'pick-avatar':   pickAvatar(); break;
+      case 'penta':         state.openPenta = state.openPenta === Number(d.idx) ? -1 : Number(d.idx); renderTentang(); break;
+      case 'roadmap':       state.roadYear = Number(d.idx); renderTentang(); break;
+      case 'tbl':           showTBL(d.k); break;
+      case 'close':         closeModal(); break;
+    }
+  });
+
+  document.addEventListener('input', e => {
+    if (e.target.id === 'weight'){
+      state.weight = Number(e.target.value);
+      const v = $('#w-val');
+      if (v) v.textContent = state.weight.toFixed(1);
+    }
+    if (e.target.id === 'reg-password'){
+      updatePasswordStrength();
+      updatePasswordConfirmation();
+    }
+    if (e.target.id === 'reg-confirm-password') updatePasswordConfirmation();
+  });
+
+  $('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+  $('#camera-modal').addEventListener('click', e => {
+    if (e.target.id === 'camera-modal') setCameraPreview(false);
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && $('#camera-modal').classList.contains('active')){
+      setCameraPreview(false);
+    }
+  });
+  window.addEventListener('resize', fitCameraFrame);
+  $('#avatar-input').addEventListener('change', onAvatarChosen);
+
+  $('#form-login').addEventListener('submit', e => {
+    e.preventDefault();
+    const email = e.target.querySelector('input[type="email"]').value.trim();
+    login({name: email.split('@')[0] || 'Adaptor', group:'Mahasiswa', kel:'mekarsari', photo:null});
+  });
+  $('#form-register').addEventListener('submit', e => {
+    e.preventDefault();
+    const password = $('#reg-password').value;
+    if (password !== $('#reg-confirm-password').value){
+      $('#reg-confirm-password').setCustomValidity('Konfirmasi kata sandi tidak sama.');
+      $('#reg-confirm-password').reportValidity();
+      return;
+    }
+    const name = $('#reg-name').value.trim() || 'Adaptor';
+    login({name, group:$('#reg-group').value, kel:$('#reg-kel').value, photo:null});
+  });
+
+  $('#reg-kel').innerHTML = KELURAHAN.map(k => `<option value="${k.id}">${k.name}</option>`).join('');
+  renderTop();
+})();
+</script>
+</body>
+</html>
